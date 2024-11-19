@@ -1,7 +1,10 @@
 import fastsim as fsim
 import numpy as np
 import matplotlib.pyplot as plt
-
+"""
+    2-3:
+    比較不同駕駛模式的能源效率。
+"""
 def create_custom_cycle(profile_type, params):
     """
     創建自定義行駛循環
