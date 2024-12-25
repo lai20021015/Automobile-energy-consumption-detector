@@ -1,7 +1,10 @@
 import fastsim as fsim
 import numpy as np
 import matplotlib.pyplot as plt
-
+"""
+    2-2:
+    設定最大速度、固定距離，進行模擬分析。
+"""
 def create_custom_cycle(max_speed_kmh: float, distance_km: float, accel_rate_mps2: float = 2.0):
     """
     創建自定義行駛循環
