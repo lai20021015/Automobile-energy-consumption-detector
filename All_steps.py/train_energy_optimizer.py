@@ -11,7 +11,8 @@ class TrainEnergyOptimizer:
     def __init__(self, 
                  distance_m: float = 1000.0,   # 行駛距離(公尺)
                  time_s: float = 60.0,         # 行駛時間(秒)
-                 max_speed_mps: float = 30.0,  # 最高速度(公尺/秒)→改成np.array
+                 max_speed_mps: float = 30.0,   # 最高速度(公尺/秒)
+                #  max_speed_mps: np.ndarray = np.full(61, 30.0),  # 最高速度(公尺/秒)→np.array
                  max_accel: float = 1.1,       # 最大加速度(公尺/平方秒)
                  control_points: int = 5,       # 控制點數量
                  veh_id: int = 43              # FASTSim車輛ID
@@ -98,7 +99,7 @@ class TrainEnergyOptimizer:
             # 計算能耗
             energy_consumption = sim.ess_cur_kwh[0] - sim.ess_cur_kwh[-1]
             
-            # 加入約束條件的懲罰項
+            # 加入約束條件的懲罰項:時間和距離
             time_penalty = abs(time_s[-1] - self.time_s) * 100
             distance_error = abs(np.trapz(speed_mps, time_s) - self.distance_m)
             speed_penalty = max(0, np.max(speed_mps) - self.max_speed_mps) * 1000
@@ -406,4 +407,4 @@ if __name__ == "__main__":
     optimizer.plot_results(results)
     
     # 驗證解決方案
-    # theoretical_min, sensitivity_df = optimizer.validate_solution()
+    theoretical_min, sensitivity_df = optimizer.validate_solution()
