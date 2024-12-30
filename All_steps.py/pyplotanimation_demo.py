@@ -4,7 +4,7 @@ from matplotlib.animation import FuncAnimation
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
-#設置中文
+#中文
 plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei'] 
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -35,7 +35,7 @@ def animate(i):
     return line,
 
 anim = FuncAnimation(fig, animate, init_func=init,
-                    frames=len(t), interval=10,  # 修改這一行
+                    frames=len(t), interval=10,  # 改
                     blit=True, repeat=False)
 
 plt.show()

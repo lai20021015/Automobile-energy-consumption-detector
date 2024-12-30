@@ -363,8 +363,8 @@ if __name__ == "__main__":
     # 執行優化
     results = optimizer.optimize()
     
-    # 繪製結果
-    optimizer.plot_results(results)
+    # # 繪製結果
+    # optimizer.plot_results(results)
     
     # # 驗證解決方案
     # theoretical_min, sensitivity_df = optimizer.validate_solution()
