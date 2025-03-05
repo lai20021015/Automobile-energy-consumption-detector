@@ -1,189 +1,200 @@
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
-from train_energy_optimizer import TrainEnergyOptimizer
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+import os
 
-plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei'] 
-plt.rcParams['axes.unicode_minus'] = False
+# 初始化Pygame
+pygame.init()
 
-class TrainSimulator:
+width, height = 1200, 800
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("車輛加減速最佳化模擬器")
+
+# 顏色定義
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+
+# 定義最佳化曲線數據
+# 基於您的圖表數據
+time_optimal = np.linspace(0, 60, 100)
+speed_optimal_time = np.zeros_like(time_optimal)
+for i, t in enumerate(time_optimal):
+    if t < 10:  # 加速階段
+        speed_optimal_time[i] = 7.2 * t  # 假設以7.2 km/h/s加速
+    elif t < 50:  # 巡航階段
+        speed_optimal_time[i] = 72.0  # 巡航速度72 km/h
+    else:  # 減速階段
+        speed_optimal_time[i] = 72.0 - 7.2 * (t - 50)  # 以7.2 km/h/s減速
+
+# 計算對應的距離曲線
+distance_optimal = np.zeros_like(time_optimal)
+for i in range(1, len(time_optimal)):
+    dt = time_optimal[i] - time_optimal[i-1]
+    avg_speed = (speed_optimal_time[i] + speed_optimal_time[i-1]) / 2
+    distance_optimal[i] = distance_optimal[i-1] + avg_speed * dt / 3.6  # 轉換為米/秒
+
+# 車輛物理模型
+class Vehicle:
     def __init__(self):
-        pygame.init()
-        self.width = 1200
-        self.height = 800
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("列車模擬器")
+        self.position = 0.0  # 米
+        self.speed = 0.0     # km/h
+        self.acceleration = 0.0  # km/h/s
+        self.time = 0.0      # 秒
+        self.energy_consumption = 0.0  # 某種能量單位
         
-        # 時間和物理參數
-        self.clock = pygame.time.Clock()
-        self.dt = 0.1  # 時間步長
+    def update(self, dt, acceleration):
+        # 更新加速度
+        self.acceleration = acceleration
         
-        # 列車參數
-        self.train = {
-            'position': 0,     # 位置(m)
-            'speed': 0,        # 速度(m/s)
-            'acceleration': 0,  # 加速度(m/s^2)
-            'max_speed': 30.0, # 最大速度(m/s)
-            'max_accel': 1.1,  # 最大加速度(m/s^2)
-            'energy': 0        # 累積能耗(kWh)
-        }
+        # 更新速度
+        self.speed += self.acceleration * dt
+        self.speed = max(0, self.speed)  # 確保速度不為負
         
-        # 創建優化器和獲取最佳速度曲線
-        self.optimizer = TrainEnergyOptimizer(
-            distance_m=1000.0,   # 1公里
-            time_s=60.0,         # 60秒
-            max_speed_mps=self.train['max_speed'],
-            max_accel=self.train['max_accel'],
-            control_points=5,
-            veh_id=43
-        )
+        # 更新位置
+        self.position += self.speed * dt / 3.6  # 轉換為米/秒
         
-        # 獲取最佳曲線
-        self.optimal_results = self.optimizer.optimize()
+        # 更新時間
+        self.time += dt
         
-        # 初始化實際運行數據記錄
-        self.actual_profile = {
-            'time': [0],
-            'speed': [0],
-            'position': [0],
-            'energy': [0]
-        }
-        
-        # 字體初始化
-        self.font = pygame.font.Font(None, 36)
+        # 簡單的能耗模型 (可以使用更複雜的模型)
+        # 能耗與速度平方和加速度平方成正比
+        self.energy_consumption += (0.01 * self.speed**2 + 0.2 * self.acceleration**2) * dt
 
-    def handle_input(self):
-        """處理輸入控制"""
-        keys = pygame.key.get_pressed()
-        
-        if keys[pygame.K_UP]:  # 加速
-            self.train['acceleration'] = min(self.train['max_accel'],
-                                          self.train['acceleration'] + 0.1)
-        elif keys[pygame.K_DOWN]:  # 減速/煞車
-            self.train['acceleration'] = max(-self.train['max_accel'],
-                                          self.train['acceleration'] - 0.1)
-        else:  # 慣性/阻力減速
-            self.train['acceleration'] = -0.1 * (self.train['speed'] / self.train['max_speed'])
+# 創建車輛實例
+vehicle = Vehicle()
 
-    def calculate_energy(self, speed, acceleration):
-        """計算瞬時能耗（簡化模型）"""
-        mass = 1000  # 假設質量1000kg
-        # 計算動能變化和阻力功
-        kinetic_energy = 0.5 * mass * acceleration * speed
-        resistance = 0.01 * mass * 9.81 * speed  # 簡化的阻力模型
-        return max(0, kinetic_energy + resistance) * self.dt / 3600000  # 轉換為kWh
+# 繪製函數
+def draw_dashboard():
+    # 清屏
+    screen.fill(WHITE)
+    
+    # 繪製道路
+    road_y = height - 100
+    pygame.draw.line(screen, BLACK, (50, road_y), (width - 50, road_y), 5)
+    
+    # 繪製車輛
+    car_x = 50 + (width - 100) * (vehicle.position / distance_optimal[-1])
+    # pygame.draw.rect(screen, BLUE, (car_x - 20, road_y - 30, 40, 20))
+    car_image = pygame.image.load('train.png')
+    # 調整圖片大小
+    car_image = pygame.transform.scale(car_image, (400, 250))  # 寬80像素，高40像素
+    if car_image:
+        # 如果有車輛圖片，則繪製圖片
+        # 將車輛圖片的底部中心對準道路
+        car_rect = car_image.get_rect()
+        car_rect.midbottom = (car_x, road_y)
+        screen.blit(car_image, car_rect)
+    else:
+        # 如果沒有圖片，則繪製矩形
+        pygame.draw.rect(screen, BLUE, (car_x - 20, road_y - 30, 40, 20))
+    
+    # 繪製信息面板
+    font = pygame.font.Font(None, 36)
+    
+    # 時間信息
+    time_text = font.render(f"time: {vehicle.time:.1f} secs", True, BLACK)
+    screen.blit(time_text, (50, 50))
+    
+    # 速度信息
+    speed_text = font.render(f"velosity: {vehicle.speed:.1f} km/h", True, BLACK)
+    screen.blit(speed_text, (50, 100))
+    
+    # 位置信息
+    position_text = font.render(f"location: {vehicle.position:.1f} m", True, BLACK)
+    screen.blit(position_text, (50, 150))
+    
+    # 能耗信息
+    energy_text = font.render(f"energy: {vehicle.energy_consumption:.1f} KW", True, BLACK)
+    screen.blit(energy_text, (50, 200))
+    
+    # 繪製最佳化曲線和當前車輛狀態對比
+    draw_comparison_graphs()
 
-    def update_physics(self):
-        """更新物理狀態"""
-        # 更新速度和位置
-        self.train['speed'] += self.train['acceleration'] * self.dt
-        self.train['speed'] = np.clip(self.train['speed'], 0, self.train['max_speed'])
-        self.train['position'] += self.train['speed'] * self.dt
-        
-        # 計算能耗
-        energy = self.calculate_energy(self.train['speed'], self.train['acceleration'])
-        self.train['energy'] += energy
-        
-        # 記錄實際運行數據
-        self.actual_profile['time'].append(self.actual_profile['time'][-1] + self.dt)
-        self.actual_profile['speed'].append(self.train['speed'])
-        self.actual_profile['position'].append(self.train['position'])
-        self.actual_profile['energy'].append(self.train['energy'])
+def draw_comparison_graphs():
+    # 創建速度-時間圖
+    fig_time, ax_time = plt.subplots(figsize=(5, 3.75), dpi=80)
+    ax_time.plot(time_optimal, speed_optimal_time, 'b-', label='optimal speed')
+    ax_time.plot(vehicle.time, vehicle.speed, 'ro', label='current state')
+    ax_time.set_xlabel('time(s)')
+    ax_time.set_ylabel('velocity (km/h)')
+    ax_time.set_title('time-velocity comparison')
+    ax_time.grid(True)
+    ax_time.legend()
+    
+    # 轉換為Pygame可用的surface
+    canvas_time = FigureCanvasAgg(fig_time)
+    canvas_time.draw()
+    renderer_time = canvas_time.get_renderer()
+    raw_data_time = renderer_time.tostring_rgb()
+    size_time = canvas_time.get_width_height()
+    surf_time = pygame.image.fromstring(raw_data_time, size_time, "RGB")
+    screen.blit(surf_time, (width - 400, 50))
+    plt.close(fig_time)
+    
+    # 創建速度-距離圖
+    fig_dist, ax_dist = plt.subplots(figsize=(5, 3.75), dpi=80)
+    ax_dist.plot(distance_optimal, speed_optimal_time, 'r-', label='optimal speed')
+    ax_dist.plot(vehicle.position, vehicle.speed, 'bo', label='current state')
+    ax_dist.set_xlabel('distance (m)')
+    ax_dist.set_ylabel('velocity (km/h)')
+    ax_dist.set_title('distance-velocity comparison')
+    ax_dist.grid(True)
+    ax_dist.legend()
+    
+    # 轉換為Pygame可用的surface
+    canvas_dist = FigureCanvasAgg(fig_dist)
+    canvas_dist.draw()
+    renderer_dist = canvas_dist.get_renderer()
+    raw_data_dist = renderer_dist.tostring_rgb()
+    size_dist = canvas_dist.get_width_height()
+    surf_dist = pygame.image.fromstring(raw_data_dist, size_dist, "RGB")
+    screen.blit(surf_dist, (width - 400, 350))
+    plt.close(fig_dist)
 
-    def draw_speed_comparison_chart(self):
-        """繪製速度比較圖表"""
-        chart_x = 50
-        chart_y = 50
-        chart_width = 500
-        chart_height = 200
-        
-        # 繪製圖表背景和框架
-        pygame.draw.rect(self.screen, (240, 240, 240), 
-                        (chart_x, chart_y, chart_width, chart_height))
-        pygame.draw.rect(self.screen, (0, 0, 0), 
-                        (chart_x, chart_y, chart_width, chart_height), 1)
-        
-        # 繪製最佳速度曲線
-        optimal_time = self.optimal_results['optimal_time']
-        optimal_speed = self.optimal_results['optimal_speed']
-        
-        for i in range(len(optimal_time)-1):
-            x1 = chart_x + (optimal_time[i]/60.0) * chart_width
-            y1 = chart_y + chart_height - (optimal_speed[i]/self.train['max_speed']) * chart_height
-            x2 = chart_x + (optimal_time[i+1]/60.0) * chart_width
-            y2 = chart_y + chart_height - (optimal_speed[i+1]/self.train['max_speed']) * chart_height
-            pygame.draw.line(self.screen, (0, 255, 0), (x1, y1), (x2, y2), 2)
-            
-        # 繪製實際速度曲線
-        if len(self.actual_profile['time']) > 1:
-            for i in range(len(self.actual_profile['time'])-1):
-                x1 = chart_x + (self.actual_profile['time'][i]/60.0) * chart_width
-                y1 = chart_y + chart_height - (self.actual_profile['speed'][i]/self.train['max_speed']) * chart_height
-                x2 = chart_x + (self.actual_profile['time'][i+1]/60.0) * chart_width
-                y2 = chart_y + chart_height - (self.actual_profile['speed'][i+1]/self.train['max_speed']) * chart_height
-                pygame.draw.line(self.screen, (255, 0, 0), (x1, y1), (x2, y2), 2)
+# 遊戲主循環
+running = True
+clock = pygame.time.Clock()
 
-    def draw_energy_comparison(self):
-        """繪製能耗比較"""
-        energy_x = 50
-        energy_y = 300
-        
-        # 顯示實際能耗
-        actual_text = self.font.render(f"實際能耗: {self.train['energy']:.3f} kWh", 
-                                     True, (255, 0, 0))
-        self.screen.blit(actual_text, (energy_x, energy_y))
-        
-        # 顯示最佳能耗
-        optimal_text = self.font.render(f"最佳能耗: {self.optimal_results['optimal_energy']:.3f} kWh", 
-                                      True, (0, 255, 0))
-        self.screen.blit(optimal_text, (energy_x, energy_y + 40))
+while running:
+    dt = 1  # 時間步長，秒
+    
+    # 處理事件
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+          running = False
+    
+    # 獲取鍵盤輸入
+    keys = pygame.key.get_pressed()
+    
+    # 控制加速度
+    acceleration = 0
+    if keys[pygame.K_UP]:
+        acceleration = 10.0  # 加速
+    elif keys[pygame.K_DOWN]:
+        acceleration = -10.0  # 減速
+    
+    # 更新車輛狀態
+    vehicle.update(dt, acceleration)
+    
+    # 檢查是否到達終點
+    if vehicle.position >= distance_optimal[-1]:
+        print("arrived at destination!")
+        print(f"Total time: {vehicle.time:.1f} s")
+        print(f"energy: {vehicle.energy_consumption:.1f} kw")
+        running = False
+    
+    # 繪製儀表板
+    draw_dashboard()
+    
+    # 更新顯示
+    pygame.display.flip()
+    
+    # 控制幀率
+    clock.tick(10)  # 每秒10幀
 
-    def draw(self):
-        """繪製畫面"""
-        self.screen.fill((255, 255, 255))
-        
-        # 繪製軌道
-        pygame.draw.line(self.screen, (0, 0, 0),
-                        (50, self.height-100),
-                        (self.width-50, self.height-100), 5)
-        
-        # 繪製列車
-        train_pos_x = 50 + (self.width-100) * (self.train['position']/1000.0)
-        pygame.draw.rect(self.screen, (0, 0, 255),
-                        (train_pos_x, self.height-120, 100, 40))
-        
-        # 顯示累積行駛距離
-        distance_text = self.font.render(f"累積行駛: {self.train['position']:.1f} m", 
-                                        True, (0, 0, 0))
-        self.screen.blit(distance_text, (50, self.height-80))  # 位置可以調整
-        # 繪製速度比較圖表
-        self.draw_speed_comparison_chart()
-        
-        # 繪製能耗比較
-        self.draw_energy_comparison()
-        
-        # 顯示當前速度
-        speed_text = self.font.render(f"當前速度: {self.train['speed']*3.6:.1f} km/h", 
-                                    True, (0, 0, 0))
-        self.screen.blit(speed_text, (50, self.height-50))
-        
-        pygame.display.flip()
-
-    def run(self):
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                    
-            self.handle_input()
-            self.update_physics()
-            self.draw()
-            
-            self.clock.tick(60)
-            
-        pygame.quit()
-
-if __name__ == "__main__":
-    sim = TrainSimulator()
-    sim.run()
+# 退出Pygame
+pygame.quit()
