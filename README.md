@@ -1,5 +1,5 @@
 # NYCU IEM Project
-![IEM Project](/Automobile-energy-consumption-detector/src/iem.png)
+![IEM Project](./src/iem.png)
 # 通過自動化模擬優化列車能耗和準時性
 ## 一、研究動機
 - 觀察到由於缺乏自動駕駛輔助系統，司機駕駛行為差異對列車準時性和運行效率產生顯著影響
