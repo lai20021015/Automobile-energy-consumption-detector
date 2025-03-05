@@ -12,3 +12,17 @@ To create checkboxes in markdown, you can use the following syntax:
 這樣會比較符合實際狀況，例如轉彎處需放慢
 
 ===
+1230 memo:
+1. poster製作海報!
+2. max_speed -> array
+3. x軸
+4. 加入weight變數
+5. 火車simulator(類似遊戲)
+
+
+---
+0304 memo:
+1. 不要輕易地換題目
+2. 找出功能, 教授幫忙分工
+3. 做出兩頁的投影片
+4. 增加meeting的頻率
