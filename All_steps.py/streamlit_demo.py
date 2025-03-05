@@ -20,9 +20,9 @@ def main():
     
     # 車輛選擇
     veh_options = {
-        "電動列車": 43,
-        "其他車型1": 44,
-        "其他車型2": 45
+        "EMU-500車型": 43,
+        "EMU-3000": 44,
+        "EMU-900": 45
     }
     selected_veh = st.sidebar.selectbox("選擇車輛類型", list(veh_options.keys()))
     veh_id = veh_options[selected_veh]
