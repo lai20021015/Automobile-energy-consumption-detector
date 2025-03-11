@@ -1,0 +1,38 @@
+import matplotlib.pyplot as plt
+import pygame
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+
+def draw_comparison_graphs(screen, width, vehicle, time_optimal, speed_optimal_time, distance_optimal):
+    fig_time, ax_time = plt.subplots(figsize=(5, 3.75), dpi=80)
+    ax_time.plot(time_optimal, speed_optimal_time, 'b-', label='optimal speed')
+    ax_time.plot(vehicle.time, vehicle.speed, 'ro', label='current state')
+    ax_time.set_xlabel('time(s)')
+    ax_time.set_ylabel('velocity (km/h)')
+    ax_time.set_title('time-velocity comparison')
+    ax_time.grid(True)
+    ax_time.legend()
+    canvas_time = FigureCanvasAgg(fig_time)
+    canvas_time.draw()
+    renderer_time = canvas_time.get_renderer()
+    raw_data_time = renderer_time.tostring_rgb()
+    size_time = canvas_time.get_width_height()
+    surf_time = pygame.image.fromstring(raw_data_time, size_time, "RGB")
+    screen.blit(surf_time, (width - 400, 50))
+    plt.close(fig_time)
+    
+    fig_dist, ax_dist = plt.subplots(figsize=(5, 3.75), dpi=80)
+    ax_dist.plot(distance_optimal, speed_optimal_time, 'r-', label='optimal speed')
+    ax_dist.plot(vehicle.position, vehicle.speed, 'bo', label='current state')
+    ax_dist.set_xlabel('distance (m)')
+    ax_dist.set_ylabel('velocity (km/h)')
+    ax_dist.set_title('distance-velocity comparison')
+    ax_dist.grid(True)
+    ax_dist.legend()
+    canvas_dist = FigureCanvasAgg(fig_dist)
+    canvas_dist.draw()
+    renderer_dist = canvas_dist.get_renderer()
+    raw_data_dist = renderer_dist.tostring_rgb()
+    size_dist = canvas_dist.get_width_height()
+    surf_dist = pygame.image.fromstring(raw_data_dist, size_dist, "RGB")
+    screen.blit(surf_dist, (width - 400, 350))
+    plt.close(fig_dist)
