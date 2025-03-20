@@ -4,13 +4,14 @@ from scipy.optimize import minimize, Bounds
 
 class TrainEnergyOptimizer:
     def __init__(self, distance_m=1000.0, time_s=60.0, max_speed_mps=30.0, max_accel=1.1, control_points=5, veh_id=43):
-        self.distance_m = distance_m
-        self.time_s = time_s
-        self.max_speed_mps = max_speed_mps
-        self.max_accel = max_accel
-        self.control_points = control_points
-        self.veh_id = veh_id
+        self.distance_m = distance_m # 
+        self.time_s = time_s #
+        self.max_speed_mps = max_speed_mps #速限
+        self.max_accel = max_accel #加速度限
+        self.control_points = control_points #控制點數
+        self.veh_id = veh_id #車輛ID
 
+    # 創立速度陣列
     def create_speed_profile(self, control_points):
         time_s = np.linspace(0, self.time_s, int(self.time_s) + 1)
         points = np.array([0, *control_points, 0]) 
@@ -18,14 +19,16 @@ class TrainEnergyOptimizer:
         speed_mps = np.interp(time_s, t_points, points)
         distance = np.trapz(speed_mps, time_s)
         if distance > 0:
-            speed_mps *= self.distance_m / distance
+            speed_mps *= self.distance_m / distance #調整速度array 達到目標距離
         return time_s, speed_mps
+    
 
-    def simulate_energy(self, control_points):
+    # 模擬能耗計算
+    def simulate_energy(self, control_points): 
         time_s, speed_mps = self.create_speed_profile(control_points)
         accel = np.diff(speed_mps)/np.diff(time_s)
         if np.max(np.abs(accel)) > self.max_accel:
-            return 1e6
+            return 1e6 #加速過大, 新增penalty項
 
         # 修正: 添加 road_type 和 name 參數
         cyc = fsim.cycle.Cycle(
