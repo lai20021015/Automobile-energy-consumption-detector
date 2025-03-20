@@ -3,8 +3,8 @@ import numpy as np
 class Vehicle:
     #定義汽車駕駛參數
     def __init__(self):
-        self.position = 0.0  # 米
-        self.speed = 0.0     # km/h
+        self.position = 0.0  # 已經行駛距離:米
+        self.speed = 0.0     # 速度:km/h
         self.acceleration = 0.0  # km/h/s
         self.time = 0.0      # 秒
         self.energy_consumption = 0.0  # kWh

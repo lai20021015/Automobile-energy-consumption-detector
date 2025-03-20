@@ -17,6 +17,7 @@ optimizer = TrainEnergyOptimizer()  # 最佳化器
 
 # 獲取初始最佳解
 initial_results = optimizer.optimize()
+# 利用優化, 獲得 time_optimal 和 speed_optimal_time (最佳時間和速度)
 time_optimal, speed_optimal_time = initial_results['optimal_time'], initial_results['optimal_speed']
 distance_optimal = np.cumsum(speed_optimal_time / 3.6 * np.diff(np.append(0, time_optimal)))
 
@@ -25,6 +26,8 @@ recommended_times = []
 recommended_speeds = []
 recommended_control_points = []
 last_recommendation_time = 0
+
+# 更新推薦秒數
 recommendation_interval = 5  # 每5秒更新一次推薦
 
 def draw_dashboard():
@@ -49,7 +52,7 @@ def draw_dashboard():
     # 顯示推薦速度
     if len(recommended_control_points) > 0:
         pygame.draw.rect(screen, (230, 230, 230), (50, 250, 300, 50))
-        recommend_text = f"建議速度: {recommended_control_points[0]:.1f} km/h"
+        recommend_text = f"recommend speed: {recommended_control_points[0]:.1f} km/h"
         screen.blit(font.render(recommend_text, True, GREEN), (60, 260))
     
     # 繪製比較圖
@@ -86,10 +89,10 @@ while running:
     
     # 檢查是否到達終點
     if vehicle.position >= distance_optimal[-1]:
-        print(f"到達終點！總時間: {vehicle.time:.1f} 秒, 能耗: {vehicle.energy_consumption:.1f} kW")
+        print(f"到達終點, 總時間: {vehicle.time:.1f} 秒, 能耗: {vehicle.energy_consumption:.1f} kW")
         running = False
     
-    # 繪製儀表板
+    # 繪製儀表板 每dt更新1次
     draw_dashboard()
     pygame.display.flip()
     clock.tick(10)
