@@ -3,14 +3,15 @@ import numpy as np
 from scipy.optimize import minimize, Bounds
 
 class TrainEnergyOptimizer:
-    def __init__(self, distance_m=1000.0, time_s=60.0, max_speed_mps=30.0, max_accel=1.1, control_points=5, veh_id=43):
+    def __init__(self, distance_m=1000.0, time_s=60.0, max_speed_mps=30.0, max_accel=1.1, control_points=5, veh_id=43, speed_limits = None):
         self.distance_m = distance_m
         self.time_s = time_s
         self.max_speed_mps = max_speed_mps
         self.max_accel = max_accel
         self.control_points = control_points
         self.veh_id = veh_id
-
+        self.speed_limits = speed_limits if speed_limits is not None else np.full(int(distance_m / 100), max_speed_mps)
+    
     # 創立速度陣列
     def create_speed_profile(self, control_points, current_position=0, current_speed=0, remaining_time=None):
         if current_position == 0 and current_speed == 0:
@@ -79,17 +80,26 @@ class TrainEnergyOptimizer:
                 'energy': 0.0,
                 'control_points': []
             }
-        adjusted_control_points = max(2, min(self.control_points, int(remaining_distance / 200) + 1))
+        
+        # 動態調整控制點數量
+        adjusted_control_points = max(2, min(self.control_points, int(remaining_distance / 400) + 1))  # 每 400 米一個控制點
         initial_speed_mps = current_speed / 3.6
         initial_guess = np.linspace(initial_speed_mps * 0.8, initial_speed_mps * 0.2, adjusted_control_points)
         bounds = Bounds([0.0] * adjusted_control_points, [self.max_speed_mps] * adjusted_control_points)
+        
         def objective(x):
             return self.simulate_energy(x, current_position, current_speed)
+        
         result = minimize(objective, initial_guess, method='SLSQP', bounds=bounds, options={'maxiter': 100})
+        
+        # 減少時間步長的分辨率
         time_s, speed_mps = self.create_speed_profile(result.x, current_position, current_speed)
-        speed_kmh = speed_mps * 3.6
+        reduced_time_s = time_s[::2]  # 每隔一個數據點取一次
+        reduced_speed_mps = speed_mps[::2]
+        
+        speed_kmh = reduced_speed_mps * 3.6
         return {
-            'times': time_s,
+            'times': reduced_time_s,
             'speeds': speed_kmh,
             'control_points': result.x * 3.6,
             'energy': objective(result.x)
