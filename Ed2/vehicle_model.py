@@ -1,10 +1,9 @@
 import numpy as np
 
 class Vehicle:
-    #定義汽車駕駛參數
     def __init__(self):
-        self.position = 0.0  # 已經行駛距離:米
-        self.speed = 0.0     # 速度:km/h
+        self.position = 0.0  # 米
+        self.speed = 0.0     # km/h
         self.acceleration = 0.0  # km/h/s
         self.time = 0.0      # 秒
         self.energy_consumption = 0.0  # kWh
@@ -18,5 +17,4 @@ class Vehicle:
         self.time += dt
         
         # 簡單的能耗模型
-        # 耗能 = 0.01 * 速度^2 + 0.2 * 加速度^2
         self.energy_consumption += (0.01 * self.speed**2 + 0.2 * self.acceleration**2) * dt
