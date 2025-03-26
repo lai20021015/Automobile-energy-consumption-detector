@@ -3,11 +3,16 @@ import numpy as np
 from scipy.optimize import minimize, Bounds
 
 class TrainEnergyOptimizer:
+<<<<<<< HEAD
     def __init__(self, distance_m=1000.0, time_s=60.0, max_speed_mps=30.0, max_accel=1.1, control_points=None, veh_id=43, speed_limits=None):
+=======
+    def __init__(self, distance_m=1000.0, time_s=60.0, max_speed_mps=30.0, max_accel=1.1, control_points=5, veh_id=43, speed_limits = None):
+>>>>>>> 826744ebad328a6af3661af72810891c528cb471
         self.distance_m = distance_m
         self.time_s = time_s
         self.max_speed_mps = max_speed_mps
         self.max_accel = max_accel
+<<<<<<< HEAD
         self.control_points = control_points if control_points is not None else int(distance_m / 100)
         self.veh_id = veh_id
         self.speed_limits = speed_limits
@@ -32,6 +37,41 @@ class TrainEnergyOptimizer:
         remaining_distance = self.distance_m - current_position
         if remaining_distance <= 0:
             return np.array([0]), np.array([0])
+=======
+        self.control_points = control_points
+        self.veh_id = veh_id
+        self.speed_limits = speed_limits if speed_limits is not None else np.full(int(distance_m / 100), max_speed_mps)
+    
+    # 創立速度陣列
+    def create_speed_profile(self, control_points, current_position=0, current_speed=0, remaining_time=None):
+        if current_position == 0 and current_speed == 0:
+            time_s = np.linspace(0, self.time_s, int(self.time_s) + 1)
+            points = np.array([0, *control_points, 0])
+            t_points = np.linspace(0, self.time_s, len(points))
+            speed_mps = np.interp(time_s, t_points, points)
+            distance = np.trapz(speed_mps, time_s)
+            if distance > 0:
+                speed_mps *= self.distance_m / distance
+            return time_s, speed_mps
+        else:
+            remaining_distance = self.distance_m - current_position
+            if remaining_distance <= 0:
+                return np.array([0]), np.array([0])
+            if remaining_time is None:
+                current_speed_mps = current_speed / 3.6
+                avg_control_speed = np.mean(control_points) if len(control_points) > 0 else 0
+                avg_speed = max((current_speed_mps + avg_control_speed) / 2, 1.0)
+                remaining_time = remaining_distance / avg_speed
+            time_steps = int(remaining_time) + 1
+            time_s = np.linspace(0, remaining_time, time_steps)
+            points = np.array([current_speed / 3.6, *control_points, 0])
+            t_points = np.linspace(0, remaining_time, len(points))
+            speed_mps = np.interp(time_s, t_points, points)
+            distance = np.trapz(speed_mps, time_s)
+            if distance > 0 and abs(distance - remaining_distance) > 1.0:
+                speed_mps *= remaining_distance / distance
+            return time_s, speed_mps
+>>>>>>> 826744ebad328a6af3661af72810891c528cb471
 
         # 如果沒有指定剩餘時間，根據平均速度估算
         if remaining_time is None:
@@ -59,19 +99,19 @@ class TrainEnergyOptimizer:
         return time_s, speed_mps
     
     # 模擬能耗計算
-    def simulate_energy(self, control_points): 
-        time_s, speed_mps = self.create_speed_profile(control_points)
-        accel = np.diff(speed_mps)/np.diff(time_s)
+    def simulate_energy(self, control_points, current_position=0, current_speed=0):
+        time_s, speed_mps = self.create_speed_profile(control_points, current_position, current_speed)
+        if len(time_s) <= 1:
+            return 0.0
+        accel = np.diff(speed_mps) / np.diff(time_s)
         if np.max(np.abs(accel)) > self.max_accel:
-            return 1e6 #加速過大, 新增penalty項
-
-        # 修正: 添加 road_type 和 name 參數
+            return 1e6
         cyc = fsim.cycle.Cycle(
-            time_s=time_s, 
-            mps=speed_mps, 
+            time_s=time_s,
+            mps=speed_mps,
             grade=np.zeros_like(time_s),
-            road_type=np.ones_like(time_s),  # 添加 road_type 參數
-            name="optimization_cycle"  # 添加 name 參數
+            road_type=np.ones_like(time_s),
+            name="optimization_cycle" if current_position == 0 else "recommendation_cycle"
         )
         veh = fsim.vehicle.Vehicle.from_vehdb(self.veh_id)
         veh.max_regen = 0.0
@@ -85,6 +125,7 @@ class TrainEnergyOptimizer:
         bounds = Bounds([0.0] * self.control_points, [self.max_speed_mps] * self.control_points)
         result = minimize(self.simulate_energy, initial_guess, method='SLSQP', bounds=bounds, options={'maxiter': 20})
         time_s, speed_mps = self.create_speed_profile(result.x)
+<<<<<<< HEAD
         
         # 確保初始化屬性
         self.optimal_result = {
@@ -225,3 +266,40 @@ class TrainEnergyOptimizer:
             return speed_kmh[0], 0
         else:
             return 0, 0
+=======
+        return {'optimal_time': time_s, 'optimal_speed': speed_mps * 3.6, 'optimal_energy': self.simulate_energy(result.x)}
+
+    def recommend_speed_profile(self, current_position, current_speed):
+        remaining_distance = self.distance_m - current_position
+        if remaining_distance <= 0:
+            return {
+                'times': np.array([0]),
+                'speeds': np.array([0]),
+                'energy': 0.0,
+                'control_points': []
+            }
+        
+        # 動態調整控制點數量
+        adjusted_control_points = max(2, min(self.control_points, int(remaining_distance / 400) + 1))  # 每 400 米一個控制點
+        initial_speed_mps = current_speed / 3.6
+        initial_guess = np.linspace(initial_speed_mps * 0.8, initial_speed_mps * 0.2, adjusted_control_points)
+        bounds = Bounds([0.0] * adjusted_control_points, [self.max_speed_mps] * adjusted_control_points)
+        
+        def objective(x):
+            return self.simulate_energy(x, current_position, current_speed)
+        
+        result = minimize(objective, initial_guess, method='SLSQP', bounds=bounds, options={'maxiter': 100})
+        
+        # 減少時間步長的分辨率
+        time_s, speed_mps = self.create_speed_profile(result.x, current_position, current_speed)
+        reduced_time_s = time_s[::2]  # 每隔一個數據點取一次
+        reduced_speed_mps = speed_mps[::2]
+        
+        speed_kmh = reduced_speed_mps * 3.6
+        return {
+            'times': reduced_time_s,
+            'speeds': speed_kmh,
+            'control_points': result.x * 3.6,
+            'energy': objective(result.x)
+        }
+>>>>>>> 826744ebad328a6af3661af72810891c528cb471
