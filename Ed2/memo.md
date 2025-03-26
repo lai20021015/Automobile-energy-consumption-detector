@@ -44,5 +44,4 @@
 - **Pygame 介面**：Pygame 函式庫、事件處理程序、即時處理系統
 - **視覺化**：製圖函式庫、資料呈現框架、互動式視覺化工具
 
-## 引用
-Vehicle Propulsion Systems: Modeling and Control (2013, paper)
+這種分配確保每個功能領域都有明確的職責，同時保持組件之間必要的連接。
