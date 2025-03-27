@@ -1,5 +1,5 @@
 import numpy as np
-
+import fastsim as fsim
 class Vehicle:
     def __init__(self):
         self.position = 0.0  # 米
