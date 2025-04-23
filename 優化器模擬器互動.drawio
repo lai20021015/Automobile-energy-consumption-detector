@@ -4,52 +4,46 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="5A2QDB34DwjJyhREcQtT-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeColor=default;endArrow=none;startFill=0;dashed=1;" edge="1" parent="1" source="5A2QDB34DwjJyhREcQtT-4" target="2tFcNWqPH0dUX91VqK9j-1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeColor=default;endArrow=none;startFill=0;dashed=1;" parent="1" source="5A2QDB34DwjJyhREcQtT-4" target="2tFcNWqPH0dUX91VqK9j-1" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-4" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;" vertex="1" parent="1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-4" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;" parent="1" vertex="1">
           <mxGeometry x="200" y="530" width="360" height="200" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;endArrow=none;startFill=0;dashed=1;" edge="1" parent="1" source="2tFcNWqPH0dUX91VqK9j-1" target="5A2QDB34DwjJyhREcQtT-4">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;endArrow=none;startFill=0;dashed=1;" parent="1" source="2tFcNWqPH0dUX91VqK9j-1" target="5A2QDB34DwjJyhREcQtT-4" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="2tFcNWqPH0dUX91VqK9j-1" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=14;" vertex="1" parent="1">
+        <mxCell id="2tFcNWqPH0dUX91VqK9j-1" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=14;" parent="1" vertex="1">
           <mxGeometry x="200" y="370" width="360" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="2tFcNWqPH0dUX91VqK9j-3" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;b&gt;Pygame介面&lt;/b&gt;&lt;div&gt;- 儀表板、車輛狀態&lt;/div&gt;&lt;div&gt;- 使用者控制輸入&lt;/div&gt;&lt;div&gt;- 參數調整介面&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="2tFcNWqPH0dUX91VqK9j-3" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;b&gt;Pygame介面&lt;/b&gt;&lt;div&gt;- 儀表板、車輛狀態&lt;/div&gt;&lt;div&gt;- 使用者控制輸入&lt;/div&gt;&lt;div&gt;- 參數調整介面&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="220" y="400" width="140" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="2tFcNWqPH0dUX91VqK9j-16" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2tFcNWqPH0dUX91VqK9j-15">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="360" y="640" as="sourcePoint" />
-            <mxPoint x="440" y="700" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-2" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 12px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(251, 251, 251); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;&lt;b&gt;前端介面層&lt;/b&gt;&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;rounded=1;" vertex="1" parent="1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-2" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 12px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(251, 251, 251); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;&lt;b&gt;前端介面層&lt;/b&gt;&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
           <mxGeometry x="345" y="370" width="70" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-3" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;b&gt;數據視覺化組件&lt;/b&gt;&lt;div&gt;- 圖表生成&lt;/div&gt;&lt;div&gt;- 模擬優化結果比較&lt;/div&gt;&lt;div&gt;- 效能指標可視化&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-3" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;b&gt;數據視覺化組件&lt;/b&gt;&lt;div&gt;- 圖表生成&lt;/div&gt;&lt;div&gt;- 模擬優化結果比較&lt;/div&gt;&lt;div&gt;- 效能指標可視化&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="400" y="400" width="140" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-5" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 12px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(251, 251, 251); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;&lt;b&gt;後端處理層&lt;/b&gt;&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-5" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 12px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(251, 251, 251); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;&lt;b&gt;後端處理層&lt;/b&gt;&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="343" y="540" width="70" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;startFill=0;" edge="1" parent="1" source="5A2QDB34DwjJyhREcQtT-6" target="5A2QDB34DwjJyhREcQtT-7">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;startFill=0;" parent="1" source="5A2QDB34DwjJyhREcQtT-6" target="5A2QDB34DwjJyhREcQtT-7" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-6" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;font&gt;&lt;b&gt;車輛Model&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font&gt;- 物理參數設定&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font&gt;&lt;font&gt;- 狀態更新&lt;/font&gt;&lt;/font&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-6" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;font&gt;&lt;b&gt;車輛Model&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font&gt;- 物理參數設定&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font&gt;&lt;font&gt;- 狀態更新&lt;/font&gt;&lt;/font&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="220" y="650" width="90" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;endArrow=none;startFill=0;" edge="1" parent="1" source="5A2QDB34DwjJyhREcQtT-7" target="5A2QDB34DwjJyhREcQtT-35">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;endArrow=none;startFill=0;" parent="1" source="5A2QDB34DwjJyhREcQtT-7" target="5A2QDB34DwjJyhREcQtT-35" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-7" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;font&gt;&lt;b&gt;Optimizer&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font&gt;- 最小化能耗&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font&gt;- 速度曲線剖面生成&lt;/font&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-7" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;font&gt;&lt;b&gt;Optimizer&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font&gt;- 最小化能耗&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font&gt;- 速度曲線剖面生成&lt;/font&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="320" y="650" width="120" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-10" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;b&gt;速度建議系統&lt;/b&gt;&lt;br&gt;&lt;div&gt;- 實時建議反饋&lt;/div&gt;&lt;div&gt;- 速限提醒&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-10" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;b&gt;速度建議系統&lt;/b&gt;&lt;br&gt;&lt;div&gt;- 實時建議反饋&lt;/div&gt;&lt;div&gt;- 速限提醒&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="263" y="570" width="234" height="59" as="geometry" />
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startFill=0;exitX=0.45;exitY=0.01;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.472;entryY=0.987;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="5A2QDB34DwjJyhREcQtT-7" target="5A2QDB34DwjJyhREcQtT-10">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startFill=0;exitX=0.45;exitY=0.01;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.472;entryY=0.987;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="5A2QDB34DwjJyhREcQtT-7" target="5A2QDB34DwjJyhREcQtT-10" edge="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="430" y="640" as="sourcePoint" />
             <mxPoint x="400" y="630" as="targetPoint" />
@@ -58,7 +52,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="5A2QDB34DwjJyhREcQtT-35" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;font&gt;&lt;b style=&quot;&quot;&gt;代理模型&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font&gt;- 回傳能耗&lt;/font&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="5A2QDB34DwjJyhREcQtT-35" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;font&gt;&lt;b style=&quot;&quot;&gt;代理模型&lt;/b&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font&gt;- 回傳能耗&lt;/font&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="450" y="650" width="90" height="70" as="geometry" />
         </mxCell>
       </root>
