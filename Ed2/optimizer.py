@@ -4,13 +4,13 @@ from scipy.optimize import minimize, Bounds
 
 class TrainEnergyOptimizer:
     def __init__(self, 
-                distance_m=1000.0,   # Travel distance (meters)
-                time_s=60.0,         # Travel time (seconds)
-                max_speed_mps=30.0,  # Maximum speed (meters/second)
-                max_accel=1.1,       # Maximum acceleration (meters/second²)
-                control_points=None,  # 控制點數量，設為 None 以根據距離動態計算
-                veh_id=43,           # FASTSim車輛ID
-                speed_limits=None    # 速限資訊，格式為 [(距離, 速限), ...]
+                    distance_m=1000.0,   # Travel distance (meters)
+                    time_s=60.0,         # Travel time (seconds)
+                    max_speed_mps=30.0,  # Maximum speed (meters/second)
+                    max_accel=1.1,       # Maximum acceleration (meters/second²)
+                    control_points=None,  # 控制點數量，設為 None 以根據距離動態計算
+                    veh_id=43,           # FASTSim車輛ID
+                    speed_limits=None    # 速限資訊，格式為 [(距離, 速限), ...]
                 ):
         self.distance_m = distance_m
         self.time_s = time_s
@@ -42,12 +42,8 @@ class TrainEnergyOptimizer:
     def get_speed_limit_at_position(self, position):
         """
         根據位置獲取當前速限
-        
-        Args:
-            position: 當前位置（公尺）
-            
-        Returns:
-            speed_limit: 當前位置的速限（m/s）
+        input:position: 當前位置（公尺）
+        Returns:speed_limit: 當前位置的速限（m/s）
         """
         # 預設為最高速度
         current_limit = self.max_speed_mps
@@ -90,6 +86,11 @@ class TrainEnergyOptimizer:
         return time_s, speed_mps
 
     def simulate_energy(self, control_points):
+        """
+        模擬能耗(電池電量消耗)
+        input: 控制點的速度
+        Return: 能源消耗（kWh）
+        """
         time_s, speed_mps = self.create_speed_profile(control_points)
         
         # 檢查加速度是否超過限制
@@ -123,22 +124,28 @@ class TrainEnergyOptimizer:
         
         return energy_consumption + time_penalty
 
-    def get_dynamic_speed_recommendation(self, current_speed, remain_distance, current_time=None):
+    # def get_dynamic_speed_recommendation(self, current_speed, remain_distance, current_time=None):
         """
-        根據當前速度和剩餘距離動態計算速度建議
-        =====>應該要新增speed_limits 
-        Args:
+        使用隨機森林模型根據當前狀態動態計算最佳速度建議
+        
+        input:
             current_speed: 當前速度（km/h）
             remain_distance: 剩餘距離（公尺）
-            current_time: 當前已行駛時間（秒），若未提供則基於平均速度估計
-            
+            current_time: 當前已行駛時間（秒）
         Returns:
-            recommendation: 字符串，"加速"、"減速"或"維持速度"
+            recommendation: 字符串，"ACC"、"DEC"或"MAT" [加速減速保持]
             target_speed: 建議目標速度（km/h）
         """
-        # 如果尚未優化，先進行優化
-        if self.optimal_result is None:
-            self.optimize(maxiter=20)
+        # 檢查RF模型是否可用
+        if not hasattr(self, 'rf_model'):
+            try:
+                import joblib
+                self.rf_model = joblib.load("models/RFmodel_v1.joblib")
+                print("成功載入RF模型")
+            except Exception as e:
+                print(f"無法載入RF模型: {e}")
+                # 如果無法載入模型，使用原始方法
+                return self.get_dynamic_speed_recommendation_original(current_speed, remain_distance, current_time)
         
         # 將當前速度轉換為 m/s
         current_speed_mps = current_speed / 3.6
@@ -146,87 +153,192 @@ class TrainEnergyOptimizer:
         # 計算已行駛距離
         traveled_distance = self.distance_m - remain_distance
         
-        # 確定當前的位置在最佳路徑中的大致點
-        # 計算剩餘距離對應的索引位置
-        if self.optimal_distance is None:
-            # 計算累積距離
-            self.optimal_time = self.optimal_result['optimal_time']
-            self.optimal_speed = self.optimal_result['optimal_speed']
-            self.optimal_distance = np.zeros_like(self.optimal_time)
-            for i in range(1, len(self.optimal_time)):
-                dt = self.optimal_time[i] - self.optimal_time[i-1]
-                avg_speed = (self.optimal_speed[i] + self.optimal_speed[i-1]) / 2
-                self.optimal_distance[i] = self.optimal_distance[i-1] + avg_speed * dt
+        # 計算剩餘時間
+        if current_time is None:
+            # 估算當前時間
+            avg_speed = max(0.1, current_speed_mps)  # 避免除以零
+            current_time = traveled_distance / avg_speed
         
-        # 找到當前位置最近的索引
-        current_idx = np.searchsorted(self.optimal_distance, traveled_distance)
-        if current_idx >= len(self.optimal_speed):
-            return "DEC", 0  # 已接近終點，應該減速停車
-        
-        # 計算理想速度
-        ideal_speed_mps = self.optimal_speed[current_idx]
-        ideal_speed = ideal_speed_mps * 3.6  # 轉換為 km/h
-        
-        # 計算實際剩餘時間（如果提供了當前時間）
-        if current_time is not None:
-            remain_time = self.time_s - current_time
-        else:
-            # 若未提供當前時間，根據平均速度估計
-            avg_speed = current_speed_mps
-            if avg_speed > 0:
-                remain_time = remain_distance / avg_speed
-            else:
-                remain_time = self.time_s  # 預設情況
+        remain_time = max(0.1, self.time_s - current_time)  # 避免除以零
         
         # 檢查當前位置的速限
-        current_speed_limit = self.get_speed_limit_at_position(traveled_distance) * 3.6  # 轉換為 km/h
-
-        # 確保建議速度不超過速限 optional 可以關閉
-        ideal_speed = min(ideal_speed, current_speed_limit)
-
-        # 判斷當前位置的理想速度與當前速度的差距
-        speed_diff = ideal_speed - current_speed
+        current_speed_limit = self.get_speed_limit_at_position(traveled_distance)
         
-        # 計算達到目的地所需的平均速度（m/s）
-        required_avg_speed = remain_distance / remain_time if remain_time > 0 else 0
+        # 計算理想的平均速度
+        required_avg_speed = remain_distance / remain_time
         
-        # 綜合考慮當前理想速度和完成行程所需的平均速度
-        # 加權因子: 以距離終點的遠近調整權重
-        distance_ratio = remain_distance / self.distance_m
-        
-        # 距離終點越遠，越重視遵循理想曲線；越近則越重視準時到達
-        if distance_ratio > 0.7:  # 距離終點還很遠
-            # 主要根據理想速度曲線
-            if speed_diff > 5:
-                recommendation = "ACC"
-            elif speed_diff < -5:
-                recommendation = "DEC"
-            else:
-                recommendation = "MAT"
-        elif distance_ratio > 0.3:  # 中等距離
-            # 平衡考慮理想速度和所需平均速度
-            required_avg_speed_kmh = required_avg_speed * 3.6
-            adjusted_target = (ideal_speed + required_avg_speed_kmh) / 2
+        # 使用隨機森林模型預測最佳速度
+        # 首先準備模型輸入特徵
+        # 注意：可能需要根據模型訓練時使用的特徵來調整
+        try:
+            # 計算常速行駛的能耗估計值
+            estimation_speeds = [
+                current_speed_mps,                   # 保持當前速度
+                min(current_speed_mps + 1.0, self.max_speed_mps),  # 略微加速
+                max(0, current_speed_mps - 1.0)      # 略微減速
+            ]
             
-            if current_speed < adjusted_target - 5:
-                recommendation = "ACC"
-            elif current_speed > adjusted_target + 5:
-                recommendation = "DEC"
-            else:
-                recommendation = "MAT"
-        else:  # 接近終點
-            # 主要確保按時到達
-            required_avg_speed_kmh = required_avg_speed * 3.6
+            # 確保建議速度不超過速限
+            estimation_speeds = [min(speed, current_speed_limit) for speed in estimation_speeds]
             
-            if required_avg_speed_kmh > current_speed + 3:
-                recommendation = "ACC"
-            elif required_avg_speed_kmh < current_speed - 7:  # 提前一些開始減速
-                recommendation = "DEC"
-            else:
-                recommendation = "MAT"
+            energy_estimations = []
+            for speed in estimation_speeds:
+                # 使用RF模型預測能耗 [速度(m/s), 時間(s), 坡度]
+                # 這裡我們用剩餘時間作為持續時間，假設坡度為0
+                features = [[speed, remain_time, 0.0]]
+                energy = self.rf_model.predict(features)[0]
+                energy_estimations.append(energy)
+            
+            # 找出能耗最低的速度
+            best_index = energy_estimations.index(min(energy_estimations))
+            best_speed_mps = estimation_speeds[best_index]
+            
+            # 將最佳速度轉換為 km/h
+            next_optimal_speed = best_speed_mps * 3.6
+            
+            # 確保建議速度不超過速限
+            speed_limit_kmh = current_speed_limit * 3.6
+            next_optimal_speed = min(next_optimal_speed, speed_limit_kmh)
+            
+        except Exception as e:
+            print(f"RF模型預測失敗: {e}")
+            # 備用方案：使用簡單的啟發式方法
+            next_optimal_speed = required_avg_speed * 3.6
         
-        return recommendation, ideal_speed
-
+        # 確定建議類型
+        speed_diff = next_optimal_speed - current_speed
+        
+        if speed_diff > 3:
+            recommendation = "ACC"
+        elif speed_diff < -3:
+            recommendation = "DEC"
+        else:
+            recommendation = "MAT"
+        
+        return recommendation, next_optimal_speed
+    
+    def get_dynamic_speed_recommendation(self, current_speed, remain_distance, current_time=None):
+        """
+        使用隨機森林模型根據當前狀態動態計算最佳速度建議
+        
+        input:
+            current_speed: 當前速度（km/h）
+            remain_distance: 剩餘距離（公尺）
+            current_time: 當前已行駛時間（秒）
+        Returns:
+            recommendation: 字符串，"ACC"、"DEC"或"MAT" [加速減速保持]
+            target_speed: 建議目標速度（km/h）
+        """
+        # 檢查RF模型是否可用
+        if not hasattr(self, 'rf_model'):
+            try:
+                import joblib
+                self.rf_model = joblib.load("models/RFmodel_v1.joblib")
+                print("成功載入RF模型")
+            except Exception as e:
+                pass
+                # print(f"無法載入RF模型: {e}")
+                # # 如果無法載入模型，使用原始方法
+                # return self.get_dynamic_speed_recommendation(current_speed, remain_distance, current_time)
+        
+        # 將當前速度轉換為 m/s
+        current_speed_ms = current_speed / 3.6
+        
+        # 計算已行駛距離
+        traveled_distance = self.distance_m - remain_distance
+        
+        # 計算剩餘時間
+        if current_time is None:
+            # 估算當前時間
+            avg_speed = max(0.1, current_speed_ms)  # 避免除以零
+            current_time = traveled_distance / avg_speed
+        
+        remain_time = max(0.1, self.time_s - current_time)  # 避免除以零
+        
+        # 檢查當前位置的速限
+        current_speed_limit = self.get_speed_limit_at_position(traveled_distance)
+        
+        # 計算理想的平均速度以準時到達
+        required_avg_speed_ms = remain_distance / remain_time
+        required_avg_speed_kmh = required_avg_speed_ms * 3.6
+        
+        # 要評估的速度範圍 (根據目前速度和所需平均速度進行調整)
+        speed_step = 5  # km/h
+        min_eval_speed = max(5, current_speed - 15)  # 最低評估速度
+        max_eval_speed = min(current_speed + 15, current_speed_limit * 3.6)  # 最高評估速度
+        
+        # 根據時間進度調整速度範圍
+        progress = current_time / self.time_s
+        if progress < 0.3:  # 初始階段
+            # 傾向於加速，建立動能
+            min_eval_speed = max(min_eval_speed, current_speed)
+        elif progress > 0.7:  # 接近終點
+            # 傾向於減速，準備停車
+            max_eval_speed = min(max_eval_speed, required_avg_speed_kmh * 1.2)
+        
+        # 生成評估速度列表
+        eval_speeds_kmh = [min_eval_speed]
+        speed = min_eval_speed
+        while speed <= max_eval_speed:
+            speed += speed_step
+            eval_speeds_kmh.append(speed)
+        
+        # 如果是初始狀態 (速度接近0)，強制評估加速選項
+        if current_speed < 5 and remain_distance > 10:
+            eval_speeds_kmh = [5, 10, 15, 20]
+        
+        # 將評估速度轉換為 m/s
+        eval_speeds_ms = [s / 3.6 for s in eval_speeds_kmh]
+        
+        # 確保所有評估速度都不超過速限
+        eval_speeds_ms = [min(s, current_speed_limit) for s in eval_speeds_ms]
+        
+        # 評估每個速度的表現
+        scores = []
+        for speed_ms in eval_speeds_ms:
+            # 使用RF模型預測能耗
+            features = [[speed_ms, remain_time, 0.0]]  # [速度(m/s), 時間(s), 坡度]
+            energy = self.rf_model.predict(features)[0]
+            
+            # 計算這個速度是否能夠按時到達目的地
+            estimated_arrival_time = remain_distance / speed_ms if speed_ms > 0 else float('inf')
+            time_penalty = 0
+            
+            if estimated_arrival_time > remain_time:
+                # 如果這個速度無法按時到達，給予懲罰
+                time_penalty = (estimated_arrival_time - remain_time) * 2  # 每延遲1秒懲罰2單位
+            
+            # 計算綜合得分 (考慮能耗和時間)
+            # 較低的分數更好
+            score = energy + time_penalty
+            scores.append(score)
+        
+        # 找出得分最低的速度
+        if scores:
+            best_index = scores.index(min(scores))
+            best_speed_kmh = eval_speeds_kmh[best_index]
+        else:
+            # 如果沒有評估速度 (不太可能發生)，使用所需平均速度
+            best_speed_kmh = required_avg_speed_kmh
+        
+        # 確定建議類型
+        speed_diff = best_speed_kmh - current_speed
+        
+        if speed_diff > 3:
+            recommendation = "ACC"
+        elif speed_diff < -3:
+            recommendation = "DEC"
+        else:
+            recommendation = "MAT"
+        
+        # 調試輸出
+        # print(f"當前速度: {current_speed:.1f} km/h, 建議速度: {best_speed_kmh:.1f} km/h")
+        # print(f"剩餘距離: {remain_distance:.1f} m, 剩餘時間: {remain_time:.1f} s")
+        # print(f"所需平均速度: {required_avg_speed_kmh:.1f} km/h")
+        # print(f"建議: {recommendation}")
+        
+        return recommendation, best_speed_kmh
+    
     def optimize(self, initial_guess=None, maxiter=20):
         """執行優化，但限制迭代次數以提高效率"""
         # 如果已經有優化結果且不需要更新，直接返回

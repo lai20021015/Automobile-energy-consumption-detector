@@ -1,0 +1,18 @@
+{
+    "model_type": "rf_mini",
+    "features_used": "all",
+    "important_feature": "all",
+    "sample_count": 100000,
+    "mae_test": 0.0015362864099213102,
+    "rmse_test": 0.001918391534759712,
+    "r2_test": 0.9841815964173036,
+    "training_time_seconds": 0.2905442714691162,
+    "inference_time_ms": 30.06745672225952,
+    "model_params": {
+        "type": "RandomForestRegressor",
+        "n_estimators": 5,
+        "max_depth": 5,
+        "min_samples_split": 10,
+        "min_samples_leaf": 5
+    }
+}
