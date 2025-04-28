@@ -1,0 +1,21 @@
+{
+    "model_type": "lightweight_random_forest",
+    "model_file": "RFmodel_v1.joblib",
+    "sample_count": 100000,
+    "mae_test": 0.0003661175087011049,
+    "rmse_test": 0.00046402944356623563,
+    "r2_test": 0.9990744940193833,
+    "training_time_seconds": 1.020765781402588,
+    "inference_time_ms": 31.646479368209835,
+    "feature_importance": {
+        "Speed": 0.1399072431789995,
+        "Duration": 0.8600927568210004,
+        "Road Grade": 0.0
+    },
+    "model_params": {
+        "n_estimators": 20,
+        "max_depth": 8,
+        "min_samples_split": 10,
+        "min_samples_leaf": 5
+    }
+}
