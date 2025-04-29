@@ -170,7 +170,7 @@ class TrainEnergyOptimizer:
         max_eval_speed = min(current_speed + 15, current_speed_limit * 3.6)  # 最高評估速度
         
 
-        # 在這裡添加停車邏輯 ↓↓↓
+        # 停車邏輯 ↓↓↓
         # 特別處理接近終點的情況
         stopping_distance = (current_speed_ms ** 2) / (2 * self.max_accel)
         safe_stopping_distance = stopping_distance * 1.5  # 50%的安全緩衝
@@ -182,13 +182,13 @@ class TrainEnergyOptimizer:
             physics_safe_speed_kmh = physics_safe_speed_ms * 3.6
             
             # 如果極近終點，強制減速到很低的速度
-            if remain_distance < 5:
+            if remain_distance < 50: # 單位:米
                 return "DEC", min(current_speed, 5.0)  # 最高5km/h
             
             # 一般減速情況
             if current_speed > physics_safe_speed_kmh + 2:
                 return "DEC", physics_safe_speed_kmh
-        # 停車邏輯結束 ↑↑↑
+        # 停車邏輯 ↑↑↑
         
         # 要評估的速度範圍 (根據目前速度和所需平均速度進行調整)
         speed_step = 5  # km/h

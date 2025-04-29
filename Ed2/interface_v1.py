@@ -72,15 +72,15 @@ optimizer = TrainEnergyOptimizer(
     distance_m=1000.0,
     time_s=60.0,
     max_speed_mps=30.0,
-    max_accel=2.0,
+    max_accel=3.0,
     control_points=None,  # 使用動態計算的控制點數量
     speed_limits=speed_limits  # 加入速限設定
 )
 
 # 預先在背景執行優化，限制迭代次數
-results = optimizer.optimize(maxiter=30)
-time_optimal, speed_optimal_time = results['optimal_time'], results['optimal_speed']
-distance_optimal = np.cumsum(speed_optimal_time) / 3.6
+# results = optimizer.optimize(maxiter=30)
+# time_optimal, speed_optimal_time = results['optimal_time'], results['optimal_speed']
+# distance_optimal = np.cumsum(speed_optimal_time) / 3.6
 
 # 創建主頁面按鈕
 def create_main_menu_buttons():
@@ -118,14 +118,28 @@ def draw_settings():
     title_rect = title_text.get_rect(center=(width//2, 100))
     screen.blit(title_text, title_rect)
     
-    # 這裡可以添加設定選項
-    setting_text = normal_font.render("Settings page under development...", True, BLACK)
-    setting_rect = setting_text.get_rect(center=(width//2, 300))
-    screen.blit(setting_text, setting_rect)
+    # # 這裡可以添加設定選項
+    # setting_text = normal_font.render("Settings page under development...", True, BLACK)
+    # setting_rect = setting_text.get_rect(center=(width//2, 300))
+    # screen.blit(setting_text, setting_rect)
     
+    # # 修改optimizer的距離、限制時間和速限
+    # optimizer.distance_m = 1200.0  # 新的距離
+    # optimizer.time_s = 80.0       # 新的限制時間
+
+    # # 更新速限設定
+    # speed_limits = [
+    #     (0, 20.0),       # 0-300m 限速 20 m/s (72 km/h)
+    #     (300, 25.0),     # 300-800m 限速 25 m/s (90 km/h)
+    #     (800, 30.0),     # 800-1200m 限速 30 m/s (108 km/h)
+    # ]
+    # optimizer.speed_limits = speed_limits
+
     # 返回按鈕
     back_button.draw(screen)
-
+    
+    # 處理鼠標點擊事件（在主循環中調用）
+    # handle_settings_events()
 def draw_leaderboard():
     screen.fill(WHITE)
     # 排行榜頁面的內容
@@ -167,15 +181,20 @@ def draw_dashboard():
         screen.blit(limit_surf, (start_x + 5, height - 125))
     
     # 繪製車輛
-    car_x = 50 + (width - 100) * (vehicle.position / distance_optimal[-1])
+    car_x = 50 + (width - 100) * (vehicle.position / optimizer.distance_m)
     pygame.draw.rect(screen, BLUE, (car_x - 20, height - 130, 40, 20))
     
     # 獲取當前位置速度限制
     current_speed_limit = optimizer.get_speed_limit_at_position(vehicle.position) * 3.6  # 轉換為 km/h
     
     # 計算剩餘距離
-    remain_distance = distance_optimal[-1] - vehicle.position
+    remain_distance = optimizer.distance_m - vehicle.position
     
+    # 顯示剩餘距離
+    remain_distance_text = f"Remaining Distance: {remain_distance:.1f} m"
+    remain_distance_surf = normal_font.render(remain_distance_text, True, BLACK)
+    screen.blit(remain_distance_surf, (50, 20))
+
     # 使用get_dynamic_speed_recommendation獲取建議
     recommendation, recommended_speed = optimizer.get_dynamic_speed_recommendation(
         # 取得建議動作，建議速度值
@@ -208,24 +227,24 @@ def draw_dashboard():
         screen.blit(font.render(text, True, color), (50, 50 + i * 40))
     
     # 顯示箭頭指示器
-    if vehicle.time % 1 < 0.04:  # 每0.04秒閃爍
-        if recommendation == "ACC":
-            # 向上箭頭
-            pygame.draw.polygon(screen, GREEN, [(width-250, 70), (width-230, 40), (width-210, 70)])
-            pygame.draw.line(screen, GREEN, (width-230, 70), (width-230, 100), 3)
-        elif recommendation == "DEC":
-            # 向下箭頭
-            pygame.draw.polygon(screen, RED, [(width-250, 70), (width-230, 100), (width-210, 70)])
-            pygame.draw.line(screen, RED, (width-230, 40), (width-230, 70), 3)
-        else:  # 保持速度
-            # 水平箭頭
-            pygame.draw.line(screen, YELLOW, (width-270, 70), (width-190, 70), 3)
-            pygame.draw.polygon(screen, YELLOW, [(width-200, 60), (width-190, 70), (width-200, 80)])
-            pygame.draw.polygon(screen, YELLOW, [(width-260, 60), (width-270, 70), (width-260, 80)])
-        
-        # 顯示建議文字
-        arrow_text = f"Recommendation: {recommendation}"
-        screen.blit(font.render(arrow_text, True, rec_color), (width - 350, 120))
+    # if vehicle.time % 1 < 0.04:  # 每0.04秒閃爍
+    if recommendation == "ACC":
+        # 向上箭頭
+        pygame.draw.polygon(screen, GREEN, [(width-250, 70), (width-230, 40), (width-210, 70)])
+        pygame.draw.line(screen, GREEN, (width-230, 70), (width-230, 100), 3)
+    elif recommendation == "DEC":
+        # 向下箭頭
+        pygame.draw.polygon(screen, RED, [(width-250, 70), (width-230, 100), (width-210, 70)])
+        pygame.draw.line(screen, RED, (width-230, 40), (width-230, 70), 3)
+    else:  # 保持速度
+        # 水平箭頭
+        pygame.draw.line(screen, YELLOW, (width-270, 70), (width-190, 70), 3)
+        pygame.draw.polygon(screen, YELLOW, [(width-200, 60), (width-190, 70), (width-200, 80)])
+        pygame.draw.polygon(screen, YELLOW, [(width-260, 60), (width-270, 70), (width-260, 80)])
+    
+    # 顯示建議文字
+    arrow_text = f"Recommendation: {recommendation}"
+    screen.blit(font.render(arrow_text, True, rec_color), (width - 350, 120))
     
     # 添加返回主選單按鈕
     game_back_button.draw(screen)
@@ -296,13 +315,13 @@ while running:
         
         # 處理鍵盤輸入
         keys = pygame.key.get_pressed()
-        acceleration = 2.0 if keys[pygame.K_UP] else (-4.0 if keys[pygame.K_DOWN] else 0)
+        acceleration = optimizer.max_accel if keys[pygame.K_UP] else (- optimizer.max_accel if keys[pygame.K_DOWN] else 0)
         
         # 更新車輛狀態
         vehicle.update(dt, acceleration)
         
         # 檢查是否到達目的地
-        if vehicle.position >= distance_optimal[-1]:
+        if vehicle.position >= optimizer.distance_m:
             print(f"Destination reached! Total time: {vehicle.time:.1f} s, Energy: {vehicle.energy_consumption:.1f} kWh")
             game_state = GameState.MAIN_MENU
         
