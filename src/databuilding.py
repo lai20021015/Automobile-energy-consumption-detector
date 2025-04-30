@@ -1,4 +1,4 @@
-import optimizer
+import Ed2.optimizer as optimizer
 import fastsim as fsim
 import numpy as np
 import csv
@@ -14,7 +14,8 @@ def generate_random_parameters():
 # Create dataset
 data = []
 for _ in range(100000):
-    print(f"Generating random parameters...{_}th iteration")
+    if _ % 10000 ==0:
+        print(f"Generating random parameters...{_}th iteration")
     params = generate_random_parameters()
     
     # Extract parameters for simulation
@@ -25,7 +26,7 @@ for _ in range(100000):
     opt = optimizer.TrainEnergyOptimizer(
         distance_m=1000.0,  # Example distance
         time_s=params[1],   # Use the generated simulation duration
-        max_speed_mps=30.0, # Example max speed
+        max_speed_mps=40, # Example max speed
         veh_id=43           # Use the valid vehicle ID
     )
     

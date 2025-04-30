@@ -13,7 +13,7 @@ pygame.display.set_caption("Train Acceleration Optimization Simulator")
 WHITE, BLACK, RED, GREEN, BLUE, YELLOW, LIGHT_GRAY, DARK_GRAY = (255, 255, 255), (0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (220, 220, 220), (100, 100, 100)
 
 # 定義字體路徑
-font_path = "../src/MSJH.TTC"
+font_path = "path/to/your/font.ttf"  # Replace with the actual path to your font file
 
 # 定義字體，如果找不到指定字體則使用系統默認字體
 try:
@@ -72,16 +72,18 @@ optimizer = TrainEnergyOptimizer(
     distance_m=1000.0,
     time_s=60.0,
     max_speed_mps=30.0,
-    max_accel=3.0,
+    max_accel=3.3,
     control_points=None,  # 使用動態計算的控制點數量
     speed_limits=speed_limits  # 加入速限設定
 )
 
 # 預先在背景執行優化，限制迭代次數
-# results = optimizer.optimize(maxiter=30)
-# time_optimal, speed_optimal_time = results['optimal_time'], results['optimal_speed']
-# distance_optimal = np.cumsum(speed_optimal_time) / 3.6
+results = optimizer.optimize(maxiter=30)
+time_optimal, speed_optimal_time = results['optimal_time'], results['optimal_speed']
+distance_optimal = np.cumsum(speed_optimal_time) / 3.6
 
+from visualization import draw_optimization_results
+draw_optimization_results(results)
 # 創建主頁面按鈕
 def create_main_menu_buttons():
     button_width, button_height = 300, 70
@@ -107,7 +109,7 @@ def draw_main_menu():
         button.draw(screen)
     
     # 繪製版權資訊
-    copyright_text = normal_font.render("© 2025 Train Simulation Team", True, DARK_GRAY)
+    copyright_text = normal_font.render("© 2025 IEM Driving Simulation Team", True, DARK_GRAY)
     copyright_rect = copyright_text.get_rect(center=(width//2, height-50))
     screen.blit(copyright_text, copyright_rect)
 
@@ -227,7 +229,6 @@ def draw_dashboard():
         screen.blit(font.render(text, True, color), (50, 50 + i * 40))
     
     # 顯示箭頭指示器
-    # if vehicle.time % 1 < 0.04:  # 每0.04秒閃爍
     if recommendation == "ACC":
         # 向上箭頭
         pygame.draw.polygon(screen, GREEN, [(width-250, 70), (width-230, 40), (width-210, 70)])
@@ -322,7 +323,7 @@ while running:
         
         # 檢查是否到達目的地
         if vehicle.position >= optimizer.distance_m:
-            print(f"Destination reached! Total time: {vehicle.time:.1f} s, Energy: {vehicle.energy_consumption:.1f} kWh")
+            print(f"Destination reached! Total time: {vehicle.time:.1f} s, Energy: {vehicle.energy_consumption:.3f} kWh")
             game_state = GameState.MAIN_MENU
         
         # 檢查遊戲中的返回按鈕
@@ -333,7 +334,7 @@ while running:
         draw_dashboard()
     
     pygame.display.flip()
-    clock.tick(10)
+    clock.tick(20) #
 
 pygame.quit()
 sys.exit()

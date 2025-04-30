@@ -17,7 +17,7 @@ class TrainEnergyOptimizer:
         self.max_speed_mps = max_speed_mps
         self.max_accel = max_accel
         
-        # 根據距離動態計算控制點，每 100 公尺一個點
+        # 每 100 公尺一個點
         if control_points is None:
             self.control_points = max(3, int(distance_m / 100))
         else:
@@ -119,15 +119,11 @@ class TrainEnergyOptimizer:
         sim.sim_drive()
         energy_consumption = sim.ess_cur_kwh[0] - sim.ess_cur_kwh[-1]
         
-        # 增加準時性懲罰
-        time_penalty = abs(time_s[-1] - self.time_s) * 10  # 偏離目標時間的懲罰
-        
-        return energy_consumption + time_penalty
+        return energy_consumption
 
     def get_dynamic_speed_recommendation(self, current_speed, remain_distance, current_time=None):
         """
         使用隨機森林模型根據當前狀態動態計算最佳速度建議
-        
         input:
             current_speed: 當前速度（km/h）
             remain_distance: 剩餘距離（公尺）
@@ -142,18 +138,12 @@ class TrainEnergyOptimizer:
             import joblib
             self.rf_model = joblib.load("src/models/RFmodel_v1.joblib")
             print("成功載入RF模型")
-           
+            
         # 將當前速度轉換為 m/s
         current_speed_ms = current_speed / 3.6
         
         # 計算已行駛距離
         traveled_distance = self.distance_m - remain_distance
-        
-        # # 計算剩餘時間
-        # if current_time is None:
-        #     # 估算當前時間
-        #     avg_speed = max(0.1, current_speed_ms)  # 避免除以零
-        #     current_time = traveled_distance / avg_speed
         
         remain_time = max(0.1, self.time_s - current_time)  # 避免除以零
         
@@ -188,7 +178,7 @@ class TrainEnergyOptimizer:
             # 一般減速情況
             if current_speed > physics_safe_speed_kmh + 2:
                 return "DEC", physics_safe_speed_kmh
-        # 停車邏輯 ↑↑↑
+        # 停車邏輯結束 ↑↑↑
         
         # 要評估的速度範圍 (根據目前速度和所需平均速度進行調整)
         speed_step = 5  # km/h
@@ -257,12 +247,6 @@ class TrainEnergyOptimizer:
             recommendation = "DEC"
         else:
             recommendation = "MAT"
-        
-        # 調試輸出
-        # print(f"當前速度: {current_speed:.1f} km/h, 建議速度: {best_speed_kmh:.1f} km/h")
-        # print(f"剩餘距離: {remain_distance:.1f} m, 剩餘時間: {remain_time:.1f} s")
-        # print(f"所需平均速度: {required_avg_speed_kmh:.1f} km/h")
-        # print(f"建議: {recommendation}")
         
         return recommendation, best_speed_kmh
     
