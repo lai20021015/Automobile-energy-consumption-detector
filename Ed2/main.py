@@ -45,10 +45,10 @@ ui.init(screen, width, height, optimizer)
 main_menu_buttons = ui.create_main_menu_buttons()
 
 # 創建返回按鈕
-back_button = ui.create_back_button()
+back_button = ui.Button(width//2 - 175, height - 150, 350, 70, "Back to Main Menu", ui.LIGHT_GRAY, (180, 180, 180))
 
 # 創建遊戲中的返回按鈕
-game_back_button = ui.create_game_back_button()
+game_back_button = ui.Button(width - 150, 20, 130, 50, "Menu", ui.LIGHT_GRAY, (180, 180, 180))
 
 # 創建結果畫面按鈕
 retry_button, result_back_button = ui.create_result_buttons()
@@ -178,7 +178,7 @@ while running:
         ui.draw_result(result_back_button, retry_button)
     
     pygame.display.flip()
-    clock.tick(20)
+    clock.tick(10)
 
 pygame.quit()
 sys.exit()

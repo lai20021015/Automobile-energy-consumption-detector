@@ -384,182 +384,329 @@ def draw_result(back_btn, retry_btn):
     retry_btn.draw(screen)
 
 # 儀表板繪製函數
+# 儀表板繪製函數
 def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed_optimal_time):
     """繪製遊戲儀表板"""
+    # Import math module
+    import math
+    
+    # Define colors for dashboard
+    BLACK = (0, 0, 0)
+    WHITE = (255, 255, 255)
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
+    YELLOW = (255, 255, 0)
+    LIGHT_YELLOW = (255, 255, 200)
+    GRAY = (128, 128, 128)
+    
     screen.fill(WHITE)
     
     # 左上角 - 地圖與剩餘距離
+    # -------------------------------
+    # 圓形背景
     map_radius = 125
     map_center = (map_radius, map_radius)
     pygame.draw.circle(screen, (245, 240, 230), map_center, map_radius)
     
-    # 繪製路線
+    # 繪製路線 - 垂直線
     line_width = 5
     pygame.draw.line(screen, GRAY, 
-                    (map_center[0], map_center[1] - map_radius + 20),
-                    (map_center[0], map_center[1] + map_radius - 20),
+                    (map_center[0], map_center[1] - map_radius + 20),  # 上方位置（終點）
+                    (map_center[0], map_center[1] + map_radius - 20),  # 下方位置（起點）
                     line_width)
     
-    # 終點標記
-    end_point_y = map_center[1] - map_radius + 20
+    # 繪製終點 - 紅色點，位於上方
+    end_point_y = map_center[1] - map_radius + 20  # 終點在上方
     pygame.draw.circle(screen, RED, (map_center[0], end_point_y), 8)
     
-    # 車輛位置
+    # 車輛位置指示器 - 藍色點
+    # 計算車輛位置比例（0表示起點，1表示終點）
     car_pos_ratio = vehicle.position / distance_optimal[-1]
-    path_length = (2 * map_radius - 40)
-    car_y = map_center[1] + map_radius - 20 - path_length * car_pos_ratio
+    # 計算車輛在垂直線上的位置 - 從下方往上方移動
+    path_length = (2 * map_radius - 40)  # 路徑總長度
+    car_y = map_center[1] + map_radius - 20 - path_length * car_pos_ratio  # 從下往上移動
     pygame.draw.circle(screen, BLUE, (map_center[0], car_y), 8)
     
-    # 剩餘距離
+    # 計算剩餘距離
     remain_distance = distance_optimal[-1] - vehicle.position
+
+    # 顯示剩餘距離或已到達
     distance_font = pygame.font.Font(None, 30)
+
     if remain_distance <= 0:
+        # 如果剩餘距離小於或等於0，顯示"已到達"（英文）
         distance_text = "Arrived at destination!"
     else:
+        # 否則顯示剩餘距離
         distance_text = f"Remaining: {remain_distance:.1f} m"
-    
+
     distance_surf = distance_font.render(distance_text, True, BLACK)
     text_rect = distance_surf.get_rect(center=(map_center[0], map_center[1] + map_radius + 25))
     screen.blit(distance_surf, text_rect)
     
-    # 右上角 - 時鐘倒數計時
+    # -------------------------------
+    # 右上角 - 時鐘與剩餘/延遲時間
+    # -------------------------------
+    # 選單按鈕 - 使用game_back_btn替代
+    game_back_btn.draw(screen)
+
+    # 時鐘
     clock_radius = 70
-    clock_center = (width - clock_radius - 30, 100 + clock_radius + 10)
+    clock_center = (width - clock_radius - 30, 30 + 50 + clock_radius + 10)
+
+    # 繪製時鐘外圈（深藍色）
     pygame.draw.circle(screen, (0, 0, 40), clock_center, clock_radius)
-    
-    # 計算時間
-    expected_arrival_time = 60  # 預設60秒
-    time_diff = expected_arrival_time - vehicle.time
+
+    # 計算時間數據
+    expected_arrival_time = optimizer.expected_arrival_time if hasattr(optimizer, 'expected_arrival_time') else 60  # 預設1分鐘
+    time_diff = expected_arrival_time - vehicle.time  # 正值表示剩餘時間，負值表示延遲
+
+    # 確定是剩餘時間還是延遲
     is_delayed = time_diff < 0
-    abs_time = abs(time_diff)
+    abs_time = abs(time_diff)  # 取絕對值用於顯示
     minutes = int(abs_time // 60)
     seconds = int(abs_time % 60)
-    
-    # 顯示時間
+
+    # 顯示TIME文字 - 白色
     time_label_font = pygame.font.Font(None, 36)
     time_label = time_label_font.render("TIME", True, WHITE)
     label_rect = time_label.get_rect(center=(clock_center[0], clock_center[1] - 20))
     screen.blit(time_label, label_rect)
-    
+
+    # 顯示時間 - 白色大字體
     time_font = pygame.font.Font(None, 48)
     time_text = f"{minutes:02d}:{seconds:02d}"
     time_surf = time_font.render(time_text, True, WHITE)
     text_rect = time_surf.get_rect(center=(clock_center[0], clock_center[1] + 10))
     screen.blit(time_surf, text_rect)
-    
-    # 進度圓弧
+
+    # 確定進度圓弧的顏色和文本
     if is_delayed:
+        # 延遲 - 使用紅色
         arc_color = RED
+        # 在時鐘下方顯示"Delay"文字
+        delay_font = pygame.font.Font(None, 30)
+        delay_text = f"Delay: {minutes:02d}:{seconds:02d}"
+        delay_surf = delay_font.render(delay_text, True, RED)
+        delay_rect = delay_surf.get_rect(center=(clock_center[0], clock_center[1] + clock_radius + 20))
+        screen.blit(delay_surf, delay_rect)
+        # 延遲時進度圓是完整的
         progress_percentage = 1.0
     else:
+        # 正常倒計時 - 使用綠色
         arc_color = GREEN
+        # 計算進度比例 - 從1減少到0
         progress_percentage = time_diff / expected_arrival_time if expected_arrival_time > 0 else 0
-    
+
+    # 繪製進度圈 - 從頂部開始，順時針方向
     start_angle = -math.pi / 2
     end_angle = start_angle + 2 * math.pi * progress_percentage
+
+    # 計算圓弧的矩形區域
     arc_rect = (clock_center[0] - clock_radius, clock_center[1] - clock_radius, 
                2 * clock_radius, 2 * clock_radius)
+
+    # 繪製進度圓弧（顏色根據是否延遲決定）
     pygame.draw.arc(screen, arc_color, arc_rect, start_angle, end_angle, 5)
     
-    # 中間 - 路線與火車
-    route_y = height // 2
-    route_start_x = 100
-    route_end_x = width - 100
-    total_distance = distance_optimal[-1]
-    
-    # 繪製路線
+    # -------------------------------
+    # 畫面中間 - 路線與火車
+    # -------------------------------
+    # 設定路線參數
+    route_y = height // 2  # 路線在畫面中間高度
+    route_start_x = 100  # 左側起點
+    route_end_x = width - 100  # 右側終點
+    total_distance = distance_optimal[-1]  # 使用實際的總距離
+
+    # 繪製路線(灰色)
     pygame.draw.line(screen, GRAY, (route_start_x, route_y), (route_end_x, route_y), 8)
-    
-    # 刻度標記
-    mark_count = 5
+
+    # 在路線上標記刻度（使用固定數量的刻度點，而不是用range和間隔）
+    mark_count = 5  # 希望顯示的刻度數量
     for i in range(mark_count + 1):
+        # 計算刻度位置和對應的距離值
         mark_distance = (total_distance / mark_count) * i
         mark_x = route_start_x + (route_end_x - route_start_x) * (mark_distance / total_distance)
+    
+        # 繪製刻度線
         pygame.draw.line(screen, BLACK, (mark_x, route_y - 10), (mark_x, route_y + 10), 2)
-        
+    
+        # 標記距離文字
         mark_font = pygame.font.Font(None, 24)
         mark_text = f"{int(mark_distance)}m"
         mark_surf = mark_font.render(mark_text, True, BLACK)
         mark_rect = mark_surf.get_rect(center=(mark_x, route_y + 25))
         screen.blit(mark_surf, mark_rect)
     
-    # 終點旗幟
+    # 繪製終點標誌(紅色旗幟)
     flag_width, flag_height = 30, 40
+    flag_x = route_end_x - flag_width // 2
+    flag_y = route_y - flag_height - 5
+
+    # 旗幟桿
     pygame.draw.line(screen, BLACK, (route_end_x, route_y), (route_end_x, route_y - flag_height), 3)
+    # 旗幟(紅色三角形)
     pygame.draw.polygon(screen, RED, [
         (route_end_x, route_y - flag_height),
         (route_end_x + flag_width, route_y - flag_height + flag_height // 2),
         (route_end_x, route_y - flag_height + flag_height)
     ])
-    
-    # 火車
-    train_pos_ratio = min(1.0, vehicle.position / total_distance)
+
+    # 計算火車位置
+    train_pos_ratio = min(1.0, vehicle.position / total_distance)  # 確保不超過終點
     train_x = route_start_x + (route_end_x - route_start_x) * train_pos_ratio
+
+    # 繪製火車(藍色)
     train_width, train_height = 50, 30
-    train_y = route_y - train_height // 2 - 5
-    
-    # 火車車身
+    train_y = route_y - train_height // 2 - 5  # 將火車放在軌道上方
+
+    # 火車車身(藍色矩形)
     pygame.draw.rect(screen, BLUE, (train_x - train_width // 2, train_y, train_width, train_height), border_radius=5)
-    
-    # 火車車頭
+
+    # 火車車頭(深藍色半圓)
     head_radius = train_height // 2
-    head_color = (0, 0, 150)
+    head_color = (0, 0, 150)  # 深藍色
     head_x = train_x + train_width // 2 - head_radius // 2
     pygame.draw.circle(screen, head_color, (head_x, train_y + head_radius), head_radius)
-    
-    # 車窗
+
+    # 車窗(白色小矩形)
     window_width, window_height = 8, 10
     window_spacing = 12
     for i in range(3):
         window_x = train_x - train_width // 2 + 10 + i * window_spacing
         window_y = train_y + 5
         pygame.draw.rect(screen, WHITE, (window_x, window_y, window_width, window_height))
-    
-    # 車輪
+
+    # 車輪(黑色圓圈)
     wheel_radius = 5
     wheel_spacing = train_width // 3
     for i in range(2):
         wheel_x = train_x - train_width // 4 + i * wheel_spacing
         wheel_y = train_y + train_height
         pygame.draw.circle(screen, BLACK, (wheel_x, wheel_y), wheel_radius)
+
+    # 顯示當前位置
+    position_font = pygame.font.Font(None, 30)
+    position_text = f"Position: {vehicle.position:.1f}m / {total_distance}m"
+    position_surf = position_font.render(position_text, True, BLACK)
+    position_rect = position_surf.get_rect(center=(width // 2, route_y - 40))
+    screen.blit(position_surf, position_rect)
     
+    # -------------------------------
     # 底部儀表板
+    # -------------------------------
+    # 儀表板背景
     dashboard_width, dashboard_height = 600, 180
     dashboard_x = (width - dashboard_width) // 2
     dashboard_y = height - dashboard_height - 30
-    
-    # 儀表板背景
+
+    # 繪製儀表板背景（圓角灰色矩形）
     pygame.draw.rect(screen, GRAY, 
-                    (dashboard_x, dashboard_y, dashboard_width, dashboard_height),
-                    border_radius=20)
-    
-    # 中間顯示區域
+                (dashboard_x, dashboard_y, dashboard_width, dashboard_height),
+                border_radius=20)
+
+    # 狀態指示燈（上方一排）
+    light_radius = 10
+    light_spacing = 30
+    light_y = dashboard_y + 15
+    light_start_x = dashboard_x + 30
+
+    # 紅、黃、黃、紅燈配置
+    light_colors = [RED, YELLOW, YELLOW, RED]
+    for i, color in enumerate(light_colors):
+        pygame.draw.circle(screen, color, (light_start_x + i * light_spacing, light_y), light_radius)
+
+    # 左側燈號（綠、紅、黑、黃）
+    side_light_colors = [GREEN, RED, BLACK, YELLOW]
+    side_light_spacing = 40
+    for i, color in enumerate(side_light_colors):
+        pygame.draw.circle(screen, color, (dashboard_x + 15, dashboard_y + 40 + i * side_light_spacing), light_radius)
+
+    # 中間顯示區（黑色矩形）
     display_width = dashboard_width - 180
     display_height = dashboard_height - 40
     display_x = dashboard_x + 60
     display_y = dashboard_y + 30
-    
+
     pygame.draw.rect(screen, BLACK, (display_x, display_y, display_width, display_height))
-    
-    # 速度資訊
+
+    # 獲取當前速度和建議速度
     current_speed = vehicle.speed
     recommended_speed = optimizer.get_dynamic_speed_recommendation(
         current_speed=vehicle.speed,
         remain_distance=distance_optimal[-1] - vehicle.position,
         current_time=vehicle.time
-    )[1]
+    )[1]  # 獲取建議速度值
+
+    # 在右上角只顯示建議速度箭頭，不顯示具體數值
+    info_font = pygame.font.Font(None, 30)
+    speed_rec_text = f"Target Speed"  # 移除具體速度值
+    speed_rec_surf = info_font.render(speed_rec_text, True, WHITE)
+    rec_x = display_x + display_width - speed_rec_surf.get_width() - 40  # 調整位置，為箭頭預留空間
+    rec_y = display_y + 20
+    screen.blit(speed_rec_surf, (rec_x, rec_y))
     
-    # 顯示當前速度
+    # 確定箭頭方向和顏色
+    # 調整箭頭位置，使其在 "Target Speed" 文字的右側
+    if recommended_speed > current_speed:
+        arrow_color = RED
+        # 向上箭頭（三角形）- 位置調整到 Target Speed 文字右側
+        arrow_points = [
+            (rec_x + speed_rec_surf.get_width() + 15, display_y + 25),  # 頂點
+            (rec_x + speed_rec_surf.get_width() + 10, display_y + 35),  # 左下
+            (rec_x + speed_rec_surf.get_width() + 20, display_y + 35)   # 右下
+        ]
+    else:
+        arrow_color = GREEN
+        # 向下箭頭（三角形）- 位置調整到 Target Speed 文字右側
+        arrow_points = [
+            (rec_x + speed_rec_surf.get_width() + 15, display_y + 35),  # 底點
+            (rec_x + speed_rec_surf.get_width() + 10, display_y + 25),  # 左上
+            (rec_x + speed_rec_surf.get_width() + 20, display_y + 25)   # 右上
+        ]
+
+    # 繪製箭頭（三角形）
+    pygame.draw.polygon(screen, arrow_color, arrow_points)
+
+    # 左側圓形儀表 - 速度表
+    gauge_radius = 50
+    gauge_center = (dashboard_x + 130, dashboard_y + dashboard_height//2 + 10)
+
+    # 速度表背景（白色圓）
+    pygame.draw.circle(screen, WHITE, gauge_center, gauge_radius)
+
+    # 繪製刻度線（可選）
+    for i in range(0, 121, 20):  # 假設最大速度120km/h，每20km/h一個刻度
+        angle = -math.pi / 2 + (i / 120) * 2 * math.pi  # 從-90度開始，順時針旋轉
+        start_x = gauge_center[0] + (gauge_radius - 10) * math.cos(angle)
+        start_y = gauge_center[1] + (gauge_radius - 10) * math.sin(angle)
+        end_x = gauge_center[0] + gauge_radius * math.cos(angle)
+        end_y = gauge_center[1] + gauge_radius * math.sin(angle)
+        pygame.draw.line(screen, BLACK, (start_x, start_y), (end_x, end_y), 2)
+    
+    # 繪製指針（紅色）
+    current_angle = -math.pi / 2 + (current_speed / 120) * 2 * math.pi
+    needle_length = gauge_radius - 10
+    needle_end_x = gauge_center[0] + needle_length * math.cos(current_angle)
+    needle_end_y = gauge_center[1] + needle_length * math.sin(current_angle)
+    pygame.draw.line(screen, RED, gauge_center, (needle_end_x, needle_end_y), 3)
+    
+    # 速度值在圓形儀表中間
+    speed_value_font = pygame.font.Font(None, 46)
+    speed_value_text = f"{int(current_speed)}"
+    speed_value_surf = speed_value_font.render(speed_value_text, True, BLACK)
+    speed_value_rect = speed_value_surf.get_rect(center=gauge_center)
+    screen.blit(speed_value_surf, speed_value_rect)
+
+    # 在黑色區域中間偏右顯示當前速度
     speed_font = pygame.font.Font(None, 45)
     speed_text = f"Speed: {int(current_speed)}(km/h)"
     speed_surf = speed_font.render(speed_text, True, WHITE)
+    # 放置在偏右位置
     speed_x = display_x + (display_width * 0.6) - speed_surf.get_width() // 2
     speed_y = display_y + display_height // 2 - speed_surf.get_height() // 2
     screen.blit(speed_surf, (speed_x, speed_y))
-    
-    # 返回按鈕
-    game_back_btn.draw(screen)
-
 # 保存遊戲成績
 def save_game_score(score, time, energy, distance):
     """保存遊戲成績到排行榜"""
