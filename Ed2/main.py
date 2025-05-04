@@ -7,7 +7,6 @@ import numpy as np
 import sys
 from vehicle_model import Vehicle
 from optimizer import TrainEnergyOptimizer
-from visualization import draw_optimization_results
 import ui  # 導入 UI 模組
 
 # 初始化 Pygame
@@ -29,7 +28,7 @@ optimizer = TrainEnergyOptimizer(
     distance_m=1000.0,
     time_s=60.0,
     max_speed_mps=30.0,
-    max_accel=3.3,
+    max_accel=2.0,
     control_points=None,  # 使用動態計算的控制點數量
     speed_limits=speed_limits  # 加入速限設定
 )
@@ -38,9 +37,6 @@ optimizer = TrainEnergyOptimizer(
 results = optimizer.optimize(maxiter=30)
 time_optimal, speed_optimal_time = results['optimal_time'], results['optimal_speed']
 distance_optimal = np.cumsum(speed_optimal_time) / 3.6
-
-# 繪製優化結果圖表
-# draw_optimization_results(results)
 
 # 初始化 UI 模組
 ui.init(screen, width, height, optimizer)
@@ -54,6 +50,9 @@ back_button = ui.create_back_button()
 # 創建遊戲中的返回按鈕
 game_back_button = ui.create_game_back_button()
 
+# 創建結果畫面按鈕
+retry_button, result_back_button = ui.create_result_buttons()
+
 # 重置車輛狀態
 def reset_vehicle():
     global vehicle
@@ -66,8 +65,18 @@ def update_optimization_results():
     results = optimizer.optimize(maxiter=30)
     time_optimal, speed_optimal_time = results['optimal_time'], results['optimal_speed']
     distance_optimal = np.cumsum(speed_optimal_time) / 3.6
-    # 繪製新的優化結果圖表
-    # draw_optimization_results(results)
+
+# 計算分數
+def calculate_score(time, energy):
+    """計算遊戲分數"""
+    optimal_energy = optimizer.optimal_result['optimal_energy']
+    optimal_energy_val = float(optimal_energy[0]) if isinstance(optimal_energy, (list, np.ndarray)) else float(optimal_energy)
+    
+    time_score = max(0, 50 - abs(time - 60))
+    energy_score = 50 * (optimal_energy_val / energy if energy != 0 else 0)
+    total_score = time_score + energy_score
+    
+    return total_score
 
 # 遊戲主循環
 game_state = ui.GameState.MAIN_MENU
@@ -129,7 +138,7 @@ while running:
         
         # 處理鍵盤輸入
         keys = pygame.key.get_pressed()
-        acceleration = optimizer.max_accel if keys[pygame.K_UP] else (-optimizer.max_accel if keys[pygame.K_DOWN] else 0)
+        acceleration = 2.0 if keys[pygame.K_UP] else (-4.0 if keys[pygame.K_DOWN] else 0)
         
         # 更新車輛狀態
         vehicle.update(dt, acceleration)
@@ -137,7 +146,15 @@ while running:
         # 檢查是否到達目的地
         if vehicle.position >= optimizer.distance_m:
             print(f"Destination reached! Total time: {vehicle.time:.1f} s, Energy: {vehicle.energy_consumption:.3f} kWh")
-            game_state = ui.GameState.MAIN_MENU
+            
+            # 計算分數
+            total_score = calculate_score(vehicle.time, vehicle.energy_consumption)
+            
+            # 保存遊戲成績
+            ui.save_game_score(total_score, vehicle.time, vehicle.energy_consumption, vehicle.position)
+            
+            # 切換到結果畫面
+            game_state = ui.GameState.RESULT
         
         # 檢查遊戲中的返回按鈕
         game_back_button.check_hover(mouse_pos)
@@ -145,6 +162,20 @@ while running:
             game_state = ui.GameState.MAIN_MENU
         
         ui.draw_dashboard(vehicle, game_back_button, distance_optimal, time_optimal, speed_optimal_time)
+    
+    elif game_state == ui.GameState.RESULT:
+        # 結果畫面按鈕處理
+        retry_button.check_hover(mouse_pos)
+        result_back_button.check_hover(mouse_pos)
+        
+        if retry_button.is_clicked(mouse_pos, mouse_click):
+            reset_vehicle()
+            game_state = ui.GameState.GAME
+        
+        if result_back_button.is_clicked(mouse_pos, mouse_click):
+            game_state = ui.GameState.MAIN_MENU
+        
+        ui.draw_result(result_back_button, retry_button)
     
     pygame.display.flip()
     clock.tick(20)
