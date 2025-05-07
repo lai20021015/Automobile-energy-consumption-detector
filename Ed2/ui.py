@@ -757,7 +757,57 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
 
     # 繪製箭頭
     pygame.draw.polygon(screen, arrow_color, arrow_points)
-    game_back_btn.draw(screen)
+    
+    # -------------------------------
+    # 前方速限提示 - 隨距離倒數
+    # -------------------------------
+    # 遍歷所有速限變化點
+    next_speed_limit_pos = None
+    next_speed_limit_value = None
+
+    # 查找下一個速限變化點
+    sorted_limits = sorted(optimizer.speed_limits)
+    for limit_pos, limit_speed in sorted_limits:
+        if limit_pos > vehicle.position:
+            next_speed_limit_pos = limit_pos
+            next_speed_limit_value = limit_speed * 3.6  # 轉換為 km/h
+            break
+
+    # 如果找到了下一個速限變化點
+    if next_speed_limit_pos is not None:
+        # 計算到下一個速限點的距離
+        distance_to_next = next_speed_limit_pos - vehicle.position
+        
+        # 如果距離在200米內，顯示提示
+        if 0 < distance_to_next <= 200:
+            # 設定提示位置（在畫面中上方）
+            warning_x = width // 2 - 100
+            warning_y = height // 4 - 40
+            
+            # 繪製警告三角形
+            warning_size = 20
+            warning_points = [
+                (warning_x - warning_size, warning_y + warning_size),  # 左下
+                (warning_x, warning_y - warning_size),                # 頂部
+                (warning_x + warning_size, warning_y + warning_size)   # 右下
+            ]
+            pygame.draw.polygon(screen, YELLOW, warning_points)
+            pygame.draw.polygon(screen, BLACK, warning_points, 2)  # 黑色邊框
+            
+            # 在三角形內部繪製驚嘆號
+            exclamation_font = pygame.font.Font(None, 24)
+            exclamation_surf = exclamation_font.render("!", True, BLACK)
+            exclamation_rect = exclamation_surf.get_rect(center=(warning_x, warning_y))
+            screen.blit(exclamation_surf, exclamation_rect)
+            
+            # 提示文字 (使用英文)
+            info_font = pygame.font.Font(None, 28)
+            ahead_text = f"Ahead {int(distance_to_next)}m, Speed Limit: {int(next_speed_limit_value)} (km/h)"
+            ahead_surf = info_font.render(ahead_text, True, BLACK)
+            ahead_rect = ahead_surf.get_rect(midleft=(warning_x + warning_size + 10, warning_y))
+            screen.blit(ahead_surf, ahead_rect)
+            
+        game_back_btn.draw(screen)
     
 # 保存遊戲成績
 def save_game_score(score, time, energy, distance):
