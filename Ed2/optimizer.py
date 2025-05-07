@@ -298,6 +298,7 @@ class TrainEnergyOptimizer:
         }
         
         return self.optimal_result
+
     def calculate_cumulative_energy_based_on_distance(self, optimal_result, mass=0):
         time_s = optimal_result['optimal_time']
         speed_mps = optimal_result['optimal_speed']

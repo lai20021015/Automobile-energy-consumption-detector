@@ -161,6 +161,17 @@ def draw_main_menu(buttons):
     for button in buttons:
         button.draw(screen)
     
+    # 左方繪製火車圖片
+    train_image = pygame.image.load("src/iem.png")
+    train_image = pygame.transform.scale(train_image, (200, 200))
+    train_rect = train_image.get_rect(center=(width//2 + 350, height//2 + 50))
+    screen.blit(train_image, train_rect)
+    # 右方繪製工工系徽標
+    logo_image = pygame.image.load("src/train.png")
+    logo_image = pygame.transform.scale(logo_image, (300,225))
+    logo_rect = logo_image.get_rect(center=(width//2 - 325, height//2 + 50))
+    screen.blit(logo_image, logo_rect)
+
     # 繪製版權資訊
     copyright_text = normal_font.render("© 2025 IEM Driving Simulation Team", True, DARK_GRAY)
     copyright_rect = copyright_text.get_rect(center=(width//2, height-50))
@@ -701,10 +712,6 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
         distance_m,            # x 座標：最佳距離資料
         cumulative_energy      # y 座標：最佳能耗曲線
     )
-    print(f"目前位置：{vehicle.position:.2f} m")
-    print(f"目前能耗：{vehicle.energy_consumption:.4f} kWh")
-    print(f"最佳能耗（該位置）：{optimal_energy_at_current_position:.4f} kWh")
-
 
     # 比較目前能耗與該點最佳能耗，決定燈號
     energy_light_color = GREEN if vehicle.energy_consumption <= optimal_energy_at_current_position else RED
