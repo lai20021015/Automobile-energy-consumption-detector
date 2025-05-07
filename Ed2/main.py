@@ -36,7 +36,7 @@ optimizer = TrainEnergyOptimizer(
 # 預先在背景執行優化，限制迭代次數
 results = optimizer.optimize(maxiter=30)
 time_optimal, speed_optimal_time = results['optimal_time'], results['optimal_speed']
-distance_optimal = np.cumsum(speed_optimal_time) / 3.6
+distance_optimal = np.cumsum(speed_optimal_time)
 
 # 初始化 UI 模組
 ui.init(screen, width, height, optimizer)

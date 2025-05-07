@@ -588,7 +588,7 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
 
     # 顯示當前位置
     position_font = pygame.font.Font(None, 30)
-    position_text = f"Position: {vehicle.position:.1f}m / {total_distance}m"
+    position_text = f"Position: {vehicle.position:.1f}m / {total_distance:.1f}m"
     position_surf = position_font.render(position_text, True, BLACK)
     position_rect = position_surf.get_rect(center=(width // 2, route_y - 40))
     screen.blit(position_surf, position_rect)
@@ -639,36 +639,6 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
         current_time=vehicle.time
     )[1]  # 獲取建議速度值
 
-    # 在右上角只顯示建議速度箭頭，不顯示具體數值
-    info_font = pygame.font.Font(None, 30)
-    speed_rec_text = f"Target Speed"  # 移除具體速度值
-    speed_rec_surf = info_font.render(speed_rec_text, True, WHITE)
-    rec_x = display_x + display_width - speed_rec_surf.get_width() - 40  # 調整位置，為箭頭預留空間
-    rec_y = display_y + 20
-    screen.blit(speed_rec_surf, (rec_x, rec_y))
-    
-    # 確定箭頭方向和顏色
-    # 調整箭頭位置，使其在 "Target Speed" 文字的右側
-    if recommended_speed > current_speed:
-        arrow_color = RED
-        # 向上箭頭（三角形）- 位置調整到 Target Speed 文字右側
-        arrow_points = [
-            (rec_x + speed_rec_surf.get_width() + 15, display_y + 25),  # 頂點
-            (rec_x + speed_rec_surf.get_width() + 10, display_y + 35),  # 左下
-            (rec_x + speed_rec_surf.get_width() + 20, display_y + 35)   # 右下
-        ]
-    else:
-        arrow_color = GREEN
-        # 向下箭頭（三角形）- 位置調整到 Target Speed 文字右側
-        arrow_points = [
-            (rec_x + speed_rec_surf.get_width() + 15, display_y + 35),  # 底點
-            (rec_x + speed_rec_surf.get_width() + 10, display_y + 25),  # 左上
-            (rec_x + speed_rec_surf.get_width() + 20, display_y + 25)   # 右上
-        ]
-
-    # 繪製箭頭（三角形）
-    pygame.draw.polygon(screen, arrow_color, arrow_points)
-
     # 左側圓形儀表 - 速度表
     gauge_radius = 50
     gauge_center = (dashboard_x + 130, dashboard_y + dashboard_height//2 + 10)
@@ -707,6 +677,88 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
     speed_x = display_x + (display_width * 0.6) - speed_surf.get_width() // 2
     speed_y = display_y + display_height // 2 - speed_surf.get_height() // 2
     screen.blit(speed_surf, (speed_x, speed_y))
+    
+     # 確保 optimizer 已有最佳解
+    if optimizer.optimal_result is None:
+        optimizer.optimize()
+    '''
+    cumulative_energy, distance_m = optimizer.calculate_cumulative_energy_based_on_distance(optimizer.optimal_result)
+    optimal_energy_consumption = cumulative_energy[-1]  # 取得最佳能耗總和
+
+    current_energy_consumption = vehicle.energy_consumption  # 替換為你的即時能耗變數，應該是「目前累積能耗」
+    # 判斷顏色（能耗指示燈）
+    energy_light_color = GREEN if current_energy_consumption <= optimal_energy_consumption else RED
+    '''
+    # 取得最佳能耗曲線與距離
+    cumulative_energy, distance_m = optimizer.calculate_cumulative_energy_based_on_distance(optimizer.optimal_result)
+    min_len = min(len(distance_m), len(cumulative_energy))
+    distance_m = distance_m[:min_len]
+    cumulative_energy = cumulative_energy[:min_len]
+
+    # 使用目前距離位置做線性插值，找出對應最佳能耗
+    optimal_energy_at_current_position = np.interp(
+        vehicle.position,      # x: 目前位置
+        distance_m,            # x 座標：最佳距離資料
+        cumulative_energy      # y 座標：最佳能耗曲線
+    )
+    print(f"目前位置：{vehicle.position:.2f} m")
+    print(f"目前能耗：{vehicle.energy_consumption:.4f} kWh")
+    print(f"最佳能耗（該位置）：{optimal_energy_at_current_position:.4f} kWh")
+
+
+    # 比較目前能耗與該點最佳能耗，決定燈號
+    energy_light_color = GREEN if vehicle.energy_consumption <= optimal_energy_at_current_position else RED
+
+   # ========== 能耗指示燈 ==========
+    energy_light_radius = 10
+    energy_light_x = display_x + display_width - 150  # 根據畫面向左調整，避免太靠邊
+    energy_light_y = display_y + 24
+
+    # 繪製圓形燈
+    pygame.draw.circle(screen, energy_light_color, (energy_light_x, energy_light_y), energy_light_radius)
+
+    # "Energy" 標籤文字（在圓圈左邊）
+    energy_label_font = pygame.font.Font(None, 24)
+    energy_label_text = "Energy"
+    energy_label_surf = energy_label_font.render(energy_label_text, True, WHITE)
+    energy_label_x = energy_light_x - energy_label_surf.get_width() -15
+    energy_label_y = energy_light_y - energy_label_surf.get_height() // 2
+    screen.blit(energy_label_surf, (energy_label_x, energy_label_y))
+    
+    # Target Speed 標籤（在圓圈右邊）
+    target_speed_font = pygame.font.Font(None, 24)
+    target_speed_text = "Target speed"
+    target_speed_surf = target_speed_font.render(target_speed_text, True, WHITE)
+    target_speed_x = energy_light_x + energy_light_radius + 10
+    target_speed_y = energy_light_y - target_speed_surf.get_height() // 2
+    screen.blit(target_speed_surf, (target_speed_x, target_speed_y))
+
+    # 箭頭（在 target speed 右邊）
+    arrow_base_x = target_speed_x + target_speed_surf.get_width() + 10
+    arrow_y_top = energy_light_y - 5
+    arrow_y_bottom = energy_light_y + 5
+
+    if recommended_speed > current_speed:
+        # 加速 → 紅色向上箭頭
+        arrow_color = RED
+        arrow_points = [
+            (arrow_base_x, arrow_y_top),
+            (arrow_base_x - 5, arrow_y_bottom),
+            (arrow_base_x + 5, arrow_y_bottom)
+        ]
+    else:
+        # 減速 → 綠色向下箭頭
+        arrow_color = GREEN
+        arrow_points = [
+            (arrow_base_x, arrow_y_bottom),
+            (arrow_base_x - 5, arrow_y_top),
+            (arrow_base_x + 5, arrow_y_top)
+        ]
+
+    # 繪製箭頭
+    pygame.draw.polygon(screen, arrow_color, arrow_points)
+    game_back_btn.draw(screen)
+    
 # 保存遊戲成績
 def save_game_score(score, time, energy, distance):
     """保存遊戲成績到排行榜"""

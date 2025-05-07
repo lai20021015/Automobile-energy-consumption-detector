@@ -298,3 +298,23 @@ class TrainEnergyOptimizer:
         }
         
         return self.optimal_result
+    def calculate_cumulative_energy_based_on_distance(self, optimal_result, mass=0):
+        time_s = optimal_result['optimal_time']
+        speed_mps = optimal_result['optimal_speed']
+
+        delta_t = np.diff(np.append(0, time_s))
+        distance_m = np.cumsum(speed_mps * delta_t)
+
+        grade = 0.0  # 假設平坦
+
+        if hasattr(self, 'rf_model'):
+            # 正確地批量組合特徵
+            features = np.array([[v, dt, grade] for v, dt in zip(speed_mps, delta_t)])
+            instant_energy = self.rf_model.predict(features)  # 預測多筆能耗
+        else:
+            # Fallback：基本動能模型
+            instant_energy = 0.5 * mass * speed_mps**2 * delta_t / 3600000  # 單位換算為 kWh
+
+        cumulative_energy = np.cumsum(instant_energy)
+
+        return cumulative_energy, distance_m
