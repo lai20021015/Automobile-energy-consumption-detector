@@ -135,11 +135,25 @@ while running:
     
     elif game_state == ui.GameState.GAME:
         dt = 0.5  # 時間步長（秒）
-        
+        '''
         # 處理鍵盤輸入
         keys = pygame.key.get_pressed()
         acceleration = 2.0 if keys[pygame.K_UP] else (-4.0 if keys[pygame.K_DOWN] else 0)
-        
+        '''
+        keys = pygame.key.get_pressed()
+        # 新的加速度邏輯：無輸入時自然減速（模擬空氣阻力和摩擦力）
+        if keys[pygame.K_UP]:
+            acceleration = 4.0  # 按上鍵加速，更大的加速度
+        elif keys[pygame.K_DOWN]:
+            acceleration = -3.0  # 按下鍵剎車，剎車力度稍大
+        else:
+            # 自然減速 - 與速度成正比的阻力（空氣阻力）
+            current_speed = vehicle.speed
+            if current_speed > 0.1:  # 防止速度接近0時抖動
+                acceleration = -0.5 * (current_speed / 20.0)  # 速度越快，阻力越大
+            else:
+                vehicle.speed = 0.0  # 低於閾值直接設為0
+                acceleration = 0.0
         # 更新車輛狀態
         vehicle.update(dt, acceleration)
         

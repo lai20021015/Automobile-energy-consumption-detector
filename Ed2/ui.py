@@ -161,6 +161,17 @@ def draw_main_menu(buttons):
     for button in buttons:
         button.draw(screen)
     
+    # 左方繪製火車圖片
+    train_image = pygame.image.load("src/iem.png")
+    train_image = pygame.transform.scale(train_image, (200, 200))
+    train_rect = train_image.get_rect(center=(width//2 + 350, height//2 + 50))
+    screen.blit(train_image, train_rect)
+    # 右方繪製工工系徽標
+    logo_image = pygame.image.load("src/train.png")
+    logo_image = pygame.transform.scale(logo_image, (300,225))
+    logo_rect = logo_image.get_rect(center=(width//2 - 325, height//2 + 50))
+    screen.blit(logo_image, logo_rect)
+
     # 繪製版權資訊
     copyright_text = normal_font.render("© 2025 IEM Driving Simulation Team", True, DARK_GRAY)
     copyright_rect = copyright_text.get_rect(center=(width//2, height-50))
@@ -701,10 +712,6 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
         distance_m,            # x 座標：最佳距離資料
         cumulative_energy      # y 座標：最佳能耗曲線
     )
-    print(f"目前位置：{vehicle.position:.2f} m")
-    print(f"目前能耗：{vehicle.energy_consumption:.4f} kWh")
-    print(f"最佳能耗（該位置）：{optimal_energy_at_current_position:.4f} kWh")
-
 
     # 比較目前能耗與該點最佳能耗，決定燈號
     energy_light_color = GREEN if vehicle.energy_consumption <= optimal_energy_at_current_position else RED
@@ -757,10 +764,16 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
 
     # 繪製箭頭
     pygame.draw.polygon(screen, arrow_color, arrow_points)
-    
     # -------------------------------
     # 前方速限提示 - 隨距離倒數
     # -------------------------------
+    # 獲取當前速度和速限
+    current_speed = vehicle.speed  # 轉換為 km/h
+    current_speed_limit = optimizer.get_speed_limit_at_position(vehicle.position) * 3.6  # 轉換為 km/h
+
+    # 檢查是否超速
+    is_speeding = current_speed > current_speed_limit
+
     # 遍歷所有速限變化點
     next_speed_limit_pos = None
     next_speed_limit_value = None
@@ -773,18 +786,43 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
             next_speed_limit_value = limit_speed * 3.6  # 轉換為 km/h
             break
 
+    # 繪製提示（超速提示或前方速限提示）
+    warning_x = width // 2 - 180
+    warning_y = height // 4 - 40
+
+    # 如果超速，顯示超速警告
+    if is_speeding:
+        # 繪製警告三角形（紅色表示超速）
+        warning_size = 20
+        warning_points = [
+            (warning_x - warning_size, warning_y + warning_size),  # 左下
+            (warning_x, warning_y - warning_size),                # 頂部
+            (warning_x + warning_size, warning_y + warning_size)   # 右下
+        ]
+        pygame.draw.polygon(screen, RED, warning_points)  # 紅色表示超速警告
+        pygame.draw.polygon(screen, BLACK, warning_points, 2)  # 黑色邊框
+        
+        # 在三角形內部繪製驚嘆號
+        exclamation_font = pygame.font.Font(None, 24)
+        exclamation_surf = exclamation_font.render("!", True, BLACK)
+        exclamation_rect = exclamation_surf.get_rect(center=(warning_x, warning_y))
+        screen.blit(exclamation_surf, exclamation_rect)
+        
+        # 超速警告文字
+        info_font = pygame.font.Font(None, 28)
+        speeding_text = f"Speeding! Current: {int(current_speed)} km/h, Limit: {int(current_speed_limit)} km/h"
+        speeding_surf = info_font.render(speeding_text, True, RED)  # 紅色文字
+        speeding_rect = speeding_surf.get_rect(midleft=(warning_x + warning_size + 10, warning_y))
+        screen.blit(speeding_surf, speeding_rect)
+
     # 如果找到了下一個速限變化點
-    if next_speed_limit_pos is not None:
+    elif next_speed_limit_pos is not None:
         # 計算到下一個速限點的距離
         distance_to_next = next_speed_limit_pos - vehicle.position
         
         # 如果距離在200米內，顯示提示
         if 0 < distance_to_next <= 200:
-            # 設定提示位置（在畫面中上方）
-            warning_x = width // 2 - 100
-            warning_y = height // 4 - 40
-            
-            # 繪製警告三角形
+            # 繪製警告三角形（黃色表示前方速限變化）
             warning_size = 20
             warning_points = [
                 (warning_x - warning_size, warning_y + warning_size),  # 左下
@@ -800,14 +838,14 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
             exclamation_rect = exclamation_surf.get_rect(center=(warning_x, warning_y))
             screen.blit(exclamation_surf, exclamation_rect)
             
-            # 提示文字 (使用英文)
+            # 前方速限提示文字
             info_font = pygame.font.Font(None, 28)
             ahead_text = f"Ahead {int(distance_to_next)}m, Speed Limit: {int(next_speed_limit_value)} (km/h)"
             ahead_surf = info_font.render(ahead_text, True, BLACK)
             ahead_rect = ahead_surf.get_rect(midleft=(warning_x + warning_size + 10, warning_y))
             screen.blit(ahead_surf, ahead_rect)
-            
-        game_back_btn.draw(screen)
+
+    game_back_btn.draw(screen)
     
 # 保存遊戲成績
 def save_game_score(score, time, energy, distance):
