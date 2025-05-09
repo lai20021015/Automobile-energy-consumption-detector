@@ -45,13 +45,16 @@ ui.init(screen, width, height, optimizer)
 main_menu_buttons = ui.create_main_menu_buttons()
 
 # 創建返回按鈕
-back_button = ui.Button(width//2 - 175, height - 150, 350, 70, "Back to Main Menu", ui.LIGHT_GRAY, (180, 180, 180))
+back_button = ui.create_back_button()
 
 # 創建遊戲中的返回按鈕
-game_back_button = ui.Button(width - 150, 20, 130, 50, "Menu", ui.LIGHT_GRAY, (180, 180, 180))
+game_back_button = ui.create_game_back_button()
 
 # 創建結果畫面按鈕
-retry_button, result_back_button = ui.create_result_buttons()
+retry_button, result_back_button, detail_page_button = ui.create_result_buttons()
+
+# 創建查看更多畫面按鈕
+speed_target_button, detail_back_button = ui.create_detail_buttons()
 
 # 重置車輛狀態
 def reset_vehicle():
@@ -64,7 +67,7 @@ def update_optimization_results():
     # 重新執行優化
     results = optimizer.optimize(maxiter=30)
     time_optimal, speed_optimal_time = results['optimal_time'], results['optimal_speed']
-    distance_optimal = np.cumsum(speed_optimal_time) / 3.6
+    distance_optimal = np.cumsum(speed_optimal_time)
 
 # 計算分數
 def calculate_score(time, energy):
@@ -135,25 +138,11 @@ while running:
     
     elif game_state == ui.GameState.GAME:
         dt = 0.5  # 時間步長（秒）
-        '''
+        
         # 處理鍵盤輸入
         keys = pygame.key.get_pressed()
-        acceleration = 2.0 if keys[pygame.K_UP] else (-4.0 if keys[pygame.K_DOWN] else 0)
-        '''
-        keys = pygame.key.get_pressed()
-        # 新的加速度邏輯：無輸入時自然減速（模擬空氣阻力和摩擦力）
-        if keys[pygame.K_UP]:
-            acceleration = 4.0  # 按上鍵加速，更大的加速度
-        elif keys[pygame.K_DOWN]:
-            acceleration = -3.0  # 按下鍵剎車，剎車力度稍大
-        else:
-            # 自然減速 - 與速度成正比的阻力（空氣阻力）
-            current_speed = vehicle.speed
-            if current_speed > 0.1:  # 防止速度接近0時抖動
-                acceleration = -0.5 * (current_speed / 20.0)  # 速度越快，阻力越大
-            else:
-                vehicle.speed = 0.0  # 低於閾值直接設為0
-                acceleration = 0.0
+        acceleration = 10.0 if keys[pygame.K_UP] else (-4.0 if keys[pygame.K_DOWN] else 0)
+        
         # 更新車輛狀態
         vehicle.update(dt, acceleration)
         
@@ -181,6 +170,7 @@ while running:
         # 結果畫面按鈕處理
         retry_button.check_hover(mouse_pos)
         result_back_button.check_hover(mouse_pos)
+        detail_page_button.check_hover(mouse_pos)
         
         if retry_button.is_clicked(mouse_pos, mouse_click):
             reset_vehicle()
@@ -188,8 +178,21 @@ while running:
         
         if result_back_button.is_clicked(mouse_pos, mouse_click):
             game_state = ui.GameState.MAIN_MENU
+
+        if detail_page_button.is_clicked(mouse_pos, mouse_click):
+            game_state = ui.GameState.DETAIL
         
-        ui.draw_result(result_back_button, retry_button)
+        ui.draw_result(result_back_button, retry_button, detail_page_button)
+    
+    elif game_state == ui.GameState.DETAIL:
+        # 詳細資訊頁面按鈕處理
+        detail_back_button.check_hover(mouse_pos)
+        speed_target_button.check_hover(mouse_pos)
+
+        if detail_back_button.is_clicked(mouse_pos, mouse_click):
+            game_state = ui.GameState.RESULT
+        
+        ui.draw_detail_page(detail_back_button, speed_target_button)
     
     pygame.display.flip()
     clock.tick(10)

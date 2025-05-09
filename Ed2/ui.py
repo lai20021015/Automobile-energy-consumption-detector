@@ -53,6 +53,7 @@ class GameState(Enum):
     GAME = 3
     RESULT = 4
     EXIT = 5
+    DETAIL = 6
 
 # 定義按鈕類別
 class Button:
@@ -145,7 +146,14 @@ def create_result_buttons():
     """創建結果畫面的按鈕"""
     retry_button = Button(width//2 + 230, 650, 180, 50, "Try Again", RED, (255, 100, 100))
     result_back_button = Button(width//2 - 130, 650, 350, 50, "Back to Main Menu", GREEN, (100, 255, 100))
-    return retry_button, result_back_button
+    detail_page_button = Button(120, 500, 210 , 50 , "See More...", LIGHT_GRAY , (100, 255, 100))
+    return retry_button, result_back_button, detail_page_button
+
+def create_detail_buttons():
+    """創建查看更多畫面的按鈕"""
+    detail_back_button = Button(width//2 - 60, 655, 350 , 50 , "Back to Result Page", GREEN , (100, 255, 100))
+    speed_target_button = Button(width//2 - 430, 655, 350 , 50 , "Show Target Speed", LIGHT_GRAY , (100, 255, 100))
+    return speed_target_button, detail_back_button
 
 # 繪製主選單
 def draw_main_menu(buttons):
@@ -161,17 +169,6 @@ def draw_main_menu(buttons):
     for button in buttons:
         button.draw(screen)
     
-    # 左方繪製火車圖片
-    train_image = pygame.image.load("src/iem.png")
-    train_image = pygame.transform.scale(train_image, (200, 200))
-    train_rect = train_image.get_rect(center=(width//2 + 350, height//2 + 50))
-    screen.blit(train_image, train_rect)
-    # 右方繪製工工系徽標
-    logo_image = pygame.image.load("src/train.png")
-    logo_image = pygame.transform.scale(logo_image, (300,225))
-    logo_rect = logo_image.get_rect(center=(width//2 - 325, height//2 + 50))
-    screen.blit(logo_image, logo_rect)
-
     # 繪製版權資訊
     copyright_text = normal_font.render("© 2025 IEM Driving Simulation Team", True, DARK_GRAY)
     copyright_rect = copyright_text.get_rect(center=(width//2, height-50))
@@ -351,29 +348,87 @@ def draw_leaderboard(back_btn):
     # 返回按鈕
     back_btn.draw(screen)
 
+# 繪製查看更多頁面
+def draw_detail_page(back_btn, speed_btn):
+
+    screen.fill(DARK_GRAY)
+        
+    # 主面板
+    panel_rect = pygame.Rect(20, 20, width - 40, height - 40)
+    pygame.draw.rect(screen, LIGHT_GRAY, panel_rect)
+
+    titlebg_rect = pygame.Rect(80, 75, 360, 75)
+    pygame.draw.rect(screen, WHITE, titlebg_rect, border_radius=10)
+
+    bodybg_rect = pygame.Rect(80, height//2-135, 360, 270)
+    pygame.draw.rect(screen, WHITE, bodybg_rect, border_radius=10)
+
+    if last_game_time == 60:
+        status_text = "On Time! "
+        status_color = GREEN
+    elif last_game_time < 60:
+        status_text = "Early Arrived! "
+        status_color = YELLOW
+    elif last_game_time > 60:
+        status_text = "You're Late! "
+        status_color = RED
+
+    # 標題
+    bgline_rect = pygame.Rect(80, 75, 360, 75)
+    pygame.draw.rect(screen, BLACK, bgline_rect, width=3, border_radius=10)
+    title_surface = title_font.render("Game Record", True, BLACK)
+    screen.blit(title_surface, (95, 85))
+
+    # 狀態（綠燈＋文字）
+    pygame.draw.circle(screen, status_color, (270, height//2-85), 10)   
+    screen.blit(normal_font.render(status_text, True, BLACK), (95, height//2-95))
+
+    # 分數、完成時間等文字
+    screen.blit(normal_font.render(f"Score: {last_game_score:.0f} pts", True, BLACK), (95, height//2-55))
+    screen.blit(normal_font.render(f"Finished Time: {last_game_time:.1f}", True, BLACK), (95, height//2-15))
+    screen.blit(normal_font.render(f"Distance: {last_game_distance:.1f} km", True, BLACK), (95, height//2+25))
+    # screen.blit(normal_font.render(f"Average Speed: {avg_speed} km/h", True, BLACK), (95, info_y + 3 * info_spacing))
+    screen.blit(normal_font.render(f"Total Energy: {last_game_energy:.1f} kWh", True, BLACK), (95, height//2+65))
+    
+    # 按鈕
+    back_btn.draw(screen)
+    speed_btn.draw(screen)
+
+    pygame.display.flip()
+
 # 繪製結果畫面
-def draw_result(back_btn, retry_btn):
+def draw_result(back_btn, retry_btn, detail_btn):
     """繪製結果畫面"""
     screen.fill(WHITE)
     
     # 標題
+    # 成功標題與圖示
     if last_game_time <= 60:
-        title_text = title_font.render("Success!", True, GREEN)
+        success_text = title_font.render("Success......", True, BLACK)
     else:
-        title_text = title_font.render("Fail...", True, RED)
-    title_rect = title_text.get_rect(center=(width//2, 100))
-    screen.blit(title_text, title_rect)
+        success_text = title_font.render("Fail......", True, BLACK)
+    success_rect = success_text.get_rect(center=(width//2, 100))
+    screen.blit(success_text, success_rect)
     
+    # --- 取得最佳值（從 optimizer）---
+    optimal_energy = optimizer.optimal_result['optimal_energy']
+    optimal_energy_val = float(optimal_energy[0]) if isinstance(optimal_energy, (list, np.ndarray)) else float(optimal_energy)
+
+    total_score = max(0, (50 - abs(last_game_time - 60)) + 50*(optimal_energy_val / last_game_energy if last_game_energy != 0 else 0))
+
     # 遊戲結果資訊
     if last_game_time == 60:
         status_text = "On Time!"
         status_color = GREEN
+        light_color = GREEN
     elif last_game_time < 60:
         status_text = "Early Arrived!"
         status_color = GREEN
+        light_color = YELLOW
     else:
         status_text = "You're Late!"
         status_color = RED
+        light_color = RED
     
     # 顯示結果資訊
     y_offset = height//2 - 80
@@ -390,11 +445,52 @@ def draw_result(back_btn, retry_btn):
         screen.blit(text_surf, (120, y_offset))
         y_offset += 40
     
+    # 燈號
+    pygame.draw.circle(screen, light_color, (295, height//2-70), 10)
+
+    # 排行榜背景
+    pygame.draw.rect(screen,BLACK,(width//2-30,height//2-145,490,310), border_radius=20)
+    pygame.draw.rect(screen,LIGHT_GRAY,(width//2-25,height//2-140,480,300), border_radius=20)
+    pygame.draw.rect(screen,WHITE,(width//2-10,height//2-83,450,71), border_radius=10)
+    pygame.draw.rect(screen,WHITE,(width//2-10,height//2-3,450,71), border_radius=10)
+    pygame.draw.rect(screen,WHITE,(width//2-10,height//2+77,450,71), border_radius=10)
+
+    # 排行榜（只顯示前3名）
+    y_offset = height//2-80
+    light_y_offset = height//2-68
+    line_spacing = 40  # 每行間距
+    sorted_ranking = sorted(ranking, key=lambda x: (-x[0], x[2], x[1]))
+
+    subtitle_text = normal_font.render("Leaderboard", True, BLACK)
+    screen.blit(subtitle_text, (width//2+145, y_offset - line_spacing))
+
+    for i, (total_score, time, energy) in enumerate(sorted_ranking[:3], start=1):
+        # 資料
+        if time == 60:
+            record_color = GREEN
+        elif time <60:
+            record_color = YELLOW
+        elif time >60:
+            record_color = RED
+        score_line = f"{i}. Score: {total_score:.0f} pts"
+        time_line = f"Total time: {time:.1f} s, Energy: {energy:.1f} kWh"
+
+        # 分別 render 每一行
+        score_text = normal_font.render(score_line, True, BLACK)
+        time_text = normal_font.render(time_line, True, BLACK)
+
+        # 分別 blit 到畫面上
+        screen.blit(score_text, (width//2, y_offset))
+        screen.blit(time_text, (width//2, y_offset + line_spacing))
+        y_offset += (line_spacing*2)
+        pygame.draw.circle(screen, record_color, (width//2+210, light_y_offset), 10)
+        light_y_offset += (line_spacing*2)
+
     # 按鈕
     back_btn.draw(screen)
     retry_btn.draw(screen)
+    detail_btn.draw(screen)
 
-# 儀表板繪製函數
 # 儀表板繪製函數
 def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed_optimal_time):
     """繪製遊戲儀表板"""
@@ -438,6 +534,7 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
     path_length = (2 * map_radius - 40)  # 路徑總長度
     car_y = map_center[1] + map_radius - 20 - path_length * car_pos_ratio  # 從下往上移動
     pygame.draw.circle(screen, BLUE, (map_center[0], car_y), 8)
+    
     
     # 計算剩餘距離
     remain_distance = distance_optimal[-1] - vehicle.position
@@ -689,17 +786,7 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
     speed_y = display_y + display_height // 2 - speed_surf.get_height() // 2
     screen.blit(speed_surf, (speed_x, speed_y))
     
-     # 確保 optimizer 已有最佳解
-    if optimizer.optimal_result is None:
-        optimizer.optimize()
-    '''
-    cumulative_energy, distance_m = optimizer.calculate_cumulative_energy_based_on_distance(optimizer.optimal_result)
-    optimal_energy_consumption = cumulative_energy[-1]  # 取得最佳能耗總和
-
-    current_energy_consumption = vehicle.energy_consumption  # 替換為你的即時能耗變數，應該是「目前累積能耗」
-    # 判斷顏色（能耗指示燈）
-    energy_light_color = GREEN if current_energy_consumption <= optimal_energy_consumption else RED
-    '''
+    # ========== 能耗與目標速度指示燈 ==========
     # 取得最佳能耗曲線與距離
     cumulative_energy, distance_m = optimizer.calculate_cumulative_energy_based_on_distance(optimizer.optimal_result)
     min_len = min(len(distance_m), len(cumulative_energy))
@@ -716,7 +803,7 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
     # 比較目前能耗與該點最佳能耗，決定燈號
     energy_light_color = GREEN if vehicle.energy_consumption <= optimal_energy_at_current_position else RED
 
-   # ========== 能耗指示燈 ==========
+    # 能耗指示燈
     energy_light_radius = 10
     energy_light_x = display_x + display_width - 150  # 根據畫面向左調整，避免太靠邊
     energy_light_y = display_y + 24
@@ -764,6 +851,7 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
 
     # 繪製箭頭
     pygame.draw.polygon(screen, arrow_color, arrow_points)
+    
     # -------------------------------
     # 前方速限提示 - 隨距離倒數
     # -------------------------------
@@ -844,13 +932,10 @@ def draw_dashboard(vehicle, game_back_btn, distance_optimal, time_optimal, speed
             ahead_surf = info_font.render(ahead_text, True, BLACK)
             ahead_rect = ahead_surf.get_rect(midleft=(warning_x + warning_size + 10, warning_y))
             screen.blit(ahead_surf, ahead_rect)
-
-    game_back_btn.draw(screen)
-    
 # 保存遊戲成績
 def save_game_score(score, time, energy, distance):
     """保存遊戲成績到排行榜"""
-    global ranking, last_game_score, last_game_time, last_game_energy, last_game_distance
+    global ranking, last_game_score, last_game_time,last_game_energy, last_game_distance
     
     last_game_score = score
     last_game_time = time
